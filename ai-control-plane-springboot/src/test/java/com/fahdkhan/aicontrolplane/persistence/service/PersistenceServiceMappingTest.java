@@ -1,6 +1,7 @@
 package com.fahdkhan.aicontrolplane.persistence.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,7 @@ import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionStep;
 import com.fahdkhan.aicontrolplane.persistence.entity.LlmMetadata;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepDependency;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepExecution;
+import com.fahdkhan.aicontrolplane.persistence.entity.StepExecutionId;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionInstanceRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionPlanRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionStepRepository;
@@ -65,7 +67,8 @@ class PersistenceServiceMappingTest {
         when(executionInstanceRepository.getReferenceById("e1")).thenReturn(executionInstance);
 
         StepExecution stepExecution = new StepExecution();
-        stepExecution.setId(new com.fahdkhan.aicontrolplane.persistence.entity.StepExecutionId("e1", "s1"));
+        stepExecution.setId(new StepExecutionId("e1", "s1"));
+        stepExecution.setPlan(plan);
         stepExecution.setStatus("DONE");
         when(stepExecutionRepository.save(any(StepExecution.class))).thenReturn(stepExecution);
 
@@ -96,7 +99,7 @@ class PersistenceServiceMappingTest {
         assertEquals(
                 "e1",
                 stepExecutionService
-                        .save(new StepExecutionDto("e1", "s1", "DONE", "{}", null, null, null, 1L, BigDecimal.ONE))
+                        .save(new StepExecutionDto("e1", "p1", "s1", "DONE", "{}", null, null, null, 1L, BigDecimal.ONE))
                         .executionId());
         assertEquals(
                 "openai",
@@ -104,4 +107,29 @@ class PersistenceServiceMappingTest {
                         .save(new LlmMetadataDto("e1", "openai", "gpt", 1, 1, BigDecimal.ONE, "raw"))
                         .providerId());
     }
+
+    @Test
+    void shouldRejectMismatchedStepExecutionPlanId() {
+        ExecutionInstanceRepository executionInstanceRepository = Mockito.mock(ExecutionInstanceRepository.class);
+        ExecutionStepRepository executionStepRepository = Mockito.mock(ExecutionStepRepository.class);
+        StepExecutionRepository stepExecutionRepository = Mockito.mock(StepExecutionRepository.class);
+
+        ExecutionPlan plan = new ExecutionPlan();
+        plan.setPlanId("p1");
+
+        ExecutionInstance executionInstance = new ExecutionInstance();
+        executionInstance.setExecutionId("e1");
+        executionInstance.setPlan(plan);
+        when(executionInstanceRepository.getReferenceById("e1")).thenReturn(executionInstance);
+
+        StepExecutionService service =
+                new StepExecutionService(stepExecutionRepository, executionInstanceRepository, executionStepRepository);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.save(
+                        new StepExecutionDto(
+                                "e1", "p2", "s1", "DONE", "{}", null, null, null, 1L, BigDecimal.ONE)));
+    }
+
 }

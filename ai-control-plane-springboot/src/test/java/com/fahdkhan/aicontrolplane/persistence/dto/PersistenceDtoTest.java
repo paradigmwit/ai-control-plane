@@ -17,7 +17,7 @@ class PersistenceDtoTest {
         ExecutionInstanceDto executionInstanceDto =
                 new ExecutionInstanceDto("e1", "p1", "RUNNING", now, now, now, BigDecimal.ONE);
         StepExecutionDto stepExecutionDto =
-                new StepExecutionDto("e1", "s1", "DONE", "{}", null, now, now, 42L, BigDecimal.TEN);
+                new StepExecutionDto("e1", "p1", "s1", "DONE", "{}", null, now, now, 42L, BigDecimal.TEN);
         LlmMetadataDto llmMetadataDto =
                 new LlmMetadataDto("e1", "openai", "gpt", 1, 2, BigDecimal.ONE, "raw");
 
