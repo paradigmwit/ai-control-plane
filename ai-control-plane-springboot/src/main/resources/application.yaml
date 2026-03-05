@@ -2,3 +2,44 @@ spring:
   application:
     name: ai-control-plane
 
+  datasource:
+    url: jdbc:h2:mem:controlplane;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: control_plane
+    liquibase-schema: control_plane
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+logging:
+  level:
+    liquibase: DEBUG
+    spring: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+llm:
+  providers:
+    - id: local-ollama
+      type: ollama
+      baseUrl: http://localhost:11434
+      model: llama3
+      default: true
+      costPer1kTokens: 0.0
