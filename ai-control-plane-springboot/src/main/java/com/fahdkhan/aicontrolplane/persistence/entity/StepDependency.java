@@ -1,4 +1,4 @@
-package com.fahdkhan.aicontrolplane.persistence;
+package com.fahdkhan.aicontrolplane.persistence.entity;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
