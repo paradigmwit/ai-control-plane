@@ -5,6 +5,7 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinColumns;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
@@ -23,9 +24,16 @@ public class StepExecution {
     @JoinColumn(name = "execution_id", nullable = false)
     private ExecutionInstance execution;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plan_id", nullable = false)
+    private ExecutionPlan plan;
+
     @MapsId("stepId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "step_id", nullable = false)
+    @JoinColumns({
+            @JoinColumn(name = "plan_id", referencedColumnName = "plan_id", nullable = false, insertable = false, updatable = false),
+            @JoinColumn(name = "step_id", referencedColumnName = "step_id", nullable = false)
+    })
     private ExecutionStep step;
 
     @Column(name = "status", nullable = false)
@@ -63,6 +71,14 @@ public class StepExecution {
 
     public void setExecution(ExecutionInstance execution) {
         this.execution = execution;
+    }
+
+    public ExecutionPlan getPlan() {
+        return plan;
+    }
+
+    public void setPlan(ExecutionPlan plan) {
+        this.plan = plan;
     }
 
     public ExecutionStep getStep() {

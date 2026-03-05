@@ -5,6 +5,7 @@ import java.time.Instant;
 
 public record StepExecutionDto(
         String executionId,
+        String planId,
         String stepId,
         String status,
         String outputPayload,

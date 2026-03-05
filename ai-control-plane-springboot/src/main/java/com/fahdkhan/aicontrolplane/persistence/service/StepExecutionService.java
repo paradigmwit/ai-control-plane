@@ -1,9 +1,11 @@
 package com.fahdkhan.aicontrolplane.persistence.service;
 
 import com.fahdkhan.aicontrolplane.persistence.dto.StepExecutionDto;
+import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionStepId;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepExecution;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepExecutionId;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionInstanceRepository;
+import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionPlanRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionStepRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.StepExecutionRepository;
 import java.util.List;
@@ -16,14 +18,17 @@ public class StepExecutionService {
     private final StepExecutionRepository repository;
     private final ExecutionInstanceRepository executionRepository;
     private final ExecutionStepRepository stepRepository;
+    private final ExecutionPlanRepository planRepository;
 
     public StepExecutionService(
             StepExecutionRepository repository,
             ExecutionInstanceRepository executionRepository,
-            ExecutionStepRepository stepRepository) {
+            ExecutionStepRepository stepRepository,
+            ExecutionPlanRepository planRepository) {
         this.repository = repository;
         this.executionRepository = executionRepository;
         this.stepRepository = stepRepository;
+        this.planRepository = planRepository;
     }
 
     public StepExecutionDto save(StepExecutionDto dto) {
@@ -46,7 +51,8 @@ public class StepExecutionService {
         StepExecution entity = new StepExecution();
         entity.setId(new StepExecutionId(dto.executionId(), dto.stepId()));
         entity.setExecution(executionRepository.getReferenceById(dto.executionId()));
-        entity.setStep(stepRepository.getReferenceById(dto.stepId()));
+        entity.setPlan(planRepository.getReferenceById(dto.planId()));
+        entity.setStep(stepRepository.getReferenceById(new ExecutionStepId(dto.planId(), dto.stepId())));
         entity.setStatus(dto.status());
         entity.setOutputPayload(dto.outputPayload());
         entity.setErrorMessage(dto.errorMessage());
@@ -60,6 +66,7 @@ public class StepExecutionService {
     private StepExecutionDto toDto(StepExecution entity) {
         return new StepExecutionDto(
                 entity.getId().getExecutionId(),
+                entity.getPlan().getPlanId(),
                 entity.getId().getStepId(),
                 entity.getStatus(),
                 entity.getOutputPayload(),

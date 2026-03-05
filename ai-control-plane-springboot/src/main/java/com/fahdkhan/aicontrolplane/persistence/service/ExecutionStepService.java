@@ -2,6 +2,7 @@ package com.fahdkhan.aicontrolplane.persistence.service;
 
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionStepDto;
 import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionStep;
+import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionStepId;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionPlanRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionStepRepository;
 import java.util.List;
@@ -23,21 +24,21 @@ public class ExecutionStepService {
         return toDto(repository.save(toEntity(dto)));
     }
 
-    public Optional<ExecutionStepDto> findById(String id) {
-        return repository.findById(id).map(this::toDto);
+    public Optional<ExecutionStepDto> findById(String planId, String stepId) {
+        return repository.findById(new ExecutionStepId(planId, stepId)).map(this::toDto);
     }
 
     public List<ExecutionStepDto> findAll() {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
-    public void deleteById(String id) {
-        repository.deleteById(id);
+    public void deleteById(String planId, String stepId) {
+        repository.deleteById(new ExecutionStepId(planId, stepId));
     }
 
     private ExecutionStep toEntity(ExecutionStepDto dto) {
         ExecutionStep entity = new ExecutionStep();
-        entity.setStepId(dto.stepId());
+        entity.setId(new ExecutionStepId(dto.planId(), dto.stepId()));
         entity.setPlan(planRepository.getReferenceById(dto.planId()));
         entity.setToolName(dto.toolName());
         entity.setInputPayload(dto.inputPayload());
@@ -47,8 +48,8 @@ public class ExecutionStepService {
 
     private ExecutionStepDto toDto(ExecutionStep entity) {
         return new ExecutionStepDto(
-                entity.getStepId(),
-                entity.getPlan().getPlanId(),
+                entity.getId().getStepId(),
+                entity.getId().getPlanId(),
                 entity.getToolName(),
                 entity.getInputPayload(),
                 entity.getMetadata());
