@@ -26,7 +26,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: metadata
-                  type: jsonb
+                  type: CLOB
               - column:
                   name: created_at
                   type: timestamp
@@ -57,10 +57,10 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: input_payload
-                  type: jsonb
+                  type: CLOB
               - column:
                   name: metadata
-                  type: jsonb
+                  type: CLOB
         - addPrimaryKey:
             schemaName: control_plane
             tableName: execution_step
@@ -183,7 +183,7 @@ databaseChangeLog:
                   type: varchar(50)
               - column:
                   name: output_payload
-                  type: jsonb
+                  type: CLOB
               - column:
                   name: error_message
                   type: text
