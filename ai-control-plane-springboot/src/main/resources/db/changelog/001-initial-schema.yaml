@@ -1,0 +1,284 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 000-create-schema
+      author: control-plane
+      changes:
+        - sql:
+            dbms: h2,postgresql
+            splitStatements: false
+            stripComments: true
+            sql: CREATE SCHEMA IF NOT EXISTS control_plane;
+
+  - changeSet:
+      id: 001-create-execution-plan
+      author: ai-control-plane
+      changes:
+        - createTable:
+            schemaName: control_plane
+            tableName: execution_plan
+            columns:
+              - column:
+                  name: plan_id
+                  type: varchar(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: metadata
+                  type: jsonb
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+
+  - changeSet:
+      id: 002-create-execution-step
+      author: ai-control-plane
+      changes:
+        - createTable:
+            schemaName: control_plane
+            tableName: execution_step
+            columns:
+              - column:
+                  name: step_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: plan_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tool_name
+                  type: varchar(150)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: input_payload
+                  type: jsonb
+              - column:
+                  name: metadata
+                  type: jsonb
+        - addPrimaryKey:
+            schemaName: control_plane
+            tableName: execution_step
+            columnNames: plan_id, step_id
+        - addForeignKeyConstraint:
+            baseTableSchemaName: control_plane
+            baseTableName: execution_step
+            baseColumnNames: plan_id
+            referencedTableSchemaName: control_plane
+            referencedTableName: execution_plan
+            referencedColumnNames: plan_id
+            constraintName: fk_step_plan
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 003-create-step-dependency
+      author: ai-control-plane
+      changes:
+        - createTable:
+            schemaName: control_plane
+            tableName: step_dependency
+            columns:
+              - column:
+                  name: plan_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: step_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: depends_on_step_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            schemaName: control_plane
+            tableName: step_dependency
+            columnNames: plan_id, step_id, depends_on_step_id
+        - addForeignKeyConstraint:
+            baseTableSchemaName: control_plane
+            baseTableName: step_dependency
+            baseColumnNames: plan_id, step_id
+            referencedTableSchemaName: control_plane
+            referencedTableName: execution_step
+            referencedColumnNames: plan_id, step_id
+            constraintName: fk_dependency_step
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 004-create-execution-instance
+      author: ai-control-plane
+      changes:
+        - createTable:
+            schemaName: control_plane
+            tableName: execution_instance
+            columns:
+              - column:
+                  name: execution_id
+                  type: varchar(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: plan_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(50)
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: started_at
+                  type: timestamp
+              - column:
+                  name: completed_at
+                  type: timestamp
+              - column:
+                  name: total_cost
+                  type: numeric(12,4)
+        - addForeignKeyConstraint:
+            baseTableSchemaName: control_plane
+            baseTableName: execution_instance
+            baseColumnNames: plan_id
+            referencedTableSchemaName: control_plane
+            referencedTableName: execution_plan
+            referencedColumnNames: plan_id
+            constraintName: fk_execution_plan
+
+  - changeSet:
+      id: 005-create-step-execution
+      author: ai-control-plane
+      changes:
+        - createTable:
+            schemaName: control_plane
+            tableName: step_execution
+            columns:
+              - column:
+                  name: execution_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: plan_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: step_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(50)
+              - column:
+                  name: output_payload
+                  type: jsonb
+              - column:
+                  name: error_message
+                  type: text
+              - column:
+                  name: started_at
+                  type: timestamp
+              - column:
+                  name: completed_at
+                  type: timestamp
+              - column:
+                  name: execution_time_ms
+                  type: bigint
+              - column:
+                  name: step_cost
+                  type: numeric(12,4)
+        - addPrimaryKey:
+            schemaName: control_plane
+            tableName: step_execution
+            columnNames: execution_id, step_id
+        - addForeignKeyConstraint:
+            baseTableSchemaName: control_plane
+            baseTableName: step_execution
+            baseColumnNames: execution_id
+            referencedTableSchemaName: control_plane
+            referencedTableName: execution_instance
+            referencedColumnNames: execution_id
+            constraintName: fk_step_exec_execution
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 006-create-llm-metadata
+      author: ai-control-plane
+      changes:
+        - createTable:
+            schemaName: control_plane
+            tableName: llm_metadata
+            columns:
+              - column:
+                  name: execution_id
+                  type: varchar(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: provider_id
+                  type: varchar(100)
+              - column:
+                  name: model_name
+                  type: varchar(100)
+              - column:
+                  name: prompt_tokens
+                  type: int
+              - column:
+                  name: completion_tokens
+                  type: int
+              - column:
+                  name: llm_cost
+                  type: numeric(12,4)
+              - column:
+                  name: raw_response
+                  type: text
+        - addForeignKeyConstraint:
+            baseTableSchemaName: control_plane
+            baseTableName: llm_metadata
+            baseColumnNames: execution_id
+            referencedTableSchemaName: control_plane
+            referencedTableName: execution_instance
+            referencedColumnNames: execution_id
+            constraintName: fk_llm_execution
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 007-add-indexes
+      author: ai-control-plane
+      changes:
+        - createIndex:
+            schemaName: control_plane
+            tableName: execution_instance
+            indexName: idx_execution_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            schemaName: control_plane
+            tableName: step_execution
+            indexName: idx_step_execution_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            schemaName: control_plane
+            tableName: execution_instance
+            indexName: idx_execution_plan_id
+            columns:
+              - column:
+                  name: plan_id
