@@ -4,8 +4,8 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinColumns;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 
 @Entity
@@ -15,14 +15,18 @@ public class StepDependency {
     @EmbeddedId
     private StepDependencyId id;
 
-    @MapsId("stepId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "step_id", nullable = false)
+    @JoinColumns({
+        @JoinColumn(name = "plan_id", referencedColumnName = "plan_id", insertable = false, updatable = false),
+        @JoinColumn(name = "step_id", referencedColumnName = "step_id", insertable = false, updatable = false)
+    })
     private ExecutionStep step;
 
-    @MapsId("dependsOnStepId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "depends_on_step_id", nullable = false)
+    @JoinColumns({
+        @JoinColumn(name = "plan_id", referencedColumnName = "plan_id", insertable = false, updatable = false),
+        @JoinColumn(name = "depends_on_step_id", referencedColumnName = "step_id", insertable = false, updatable = false)
+    })
     private ExecutionStep dependsOnStep;
 
     public StepDependencyId getId() {

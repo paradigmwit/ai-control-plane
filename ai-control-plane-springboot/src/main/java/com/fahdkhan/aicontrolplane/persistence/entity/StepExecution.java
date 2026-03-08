@@ -19,6 +19,9 @@ public class StepExecution {
     @EmbeddedId
     private StepExecutionId id;
 
+    @Column(name = "plan_id", nullable = false)
+    private String planId;
+
     @MapsId("executionId")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "execution_id", nullable = false)
@@ -56,6 +59,14 @@ public class StepExecution {
 
     public void setId(StepExecutionId id) {
         this.id = id;
+    }
+
+    public String getPlanId() {
+        return planId;
+    }
+
+    public void setPlanId(String planId) {
+        this.planId = planId;
     }
 
     public ExecutionInstance getExecution() {

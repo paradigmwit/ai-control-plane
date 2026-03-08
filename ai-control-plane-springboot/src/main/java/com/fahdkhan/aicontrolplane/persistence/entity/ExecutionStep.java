@@ -1,11 +1,12 @@
 package com.fahdkhan.aicontrolplane.persistence.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.LinkedHashSet;
@@ -15,10 +16,10 @@ import java.util.Set;
 @Table(name = "execution_step", schema = "control_plane")
 public class ExecutionStep {
 
-    @Id
-    @Column(name = "step_id", nullable = false)
-    private String stepId;
+    @EmbeddedId
+    private ExecutionStepId id;
 
+    @MapsId("planId")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plan_id", nullable = false)
     private ExecutionPlan plan;
@@ -41,12 +42,20 @@ public class ExecutionStep {
     @OneToMany(mappedBy = "step")
     private Set<StepExecution> executions = new LinkedHashSet<>();
 
-    public String getStepId() {
-        return stepId;
+    public ExecutionStepId getId() {
+        return id;
     }
 
-    public void setStepId(String stepId) {
-        this.stepId = stepId;
+    public void setId(ExecutionStepId id) {
+        this.id = id;
+    }
+
+    public String getStepId() {
+        return id == null ? null : id.getStepId();
+    }
+
+    public String getPlanId() {
+        return id == null ? null : id.getPlanId();
     }
 
     public ExecutionPlan getPlan() {
