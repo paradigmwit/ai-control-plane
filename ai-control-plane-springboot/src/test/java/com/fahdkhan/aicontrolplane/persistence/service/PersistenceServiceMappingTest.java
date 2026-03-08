@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.fahdkhan.aicontrolplane.model.ExecutionStatus;
+import com.fahdkhan.aicontrolplane.model.StepStatus;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDto;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionPlanDto;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionStepDto;
@@ -25,6 +27,7 @@ import com.fahdkhan.aicontrolplane.persistence.repository.StepExecutionRepositor
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
 import org.mockito.Mockito;
 
 class PersistenceServiceMappingTest {
@@ -59,14 +62,14 @@ class PersistenceServiceMappingTest {
         ExecutionInstance executionInstance = new ExecutionInstance();
         executionInstance.setExecutionId("e1");
         executionInstance.setPlan(plan);
-        executionInstance.setStatus("RUNNING");
+        executionInstance.setStatus(ExecutionStatus.RUNNING);
         executionInstance.setCreatedAt(Instant.now());
         when(executionInstanceRepository.save(any(ExecutionInstance.class))).thenReturn(executionInstance);
         when(executionInstanceRepository.getReferenceById("e1")).thenReturn(executionInstance);
 
         StepExecution stepExecution = new StepExecution();
         stepExecution.setId(new com.fahdkhan.aicontrolplane.persistence.entity.StepExecutionId("e1", "s1"));
-        stepExecution.setStatus("DONE");
+        stepExecution.setStatus(StepStatus.COMPLETED);
         when(stepExecutionRepository.save(any(StepExecution.class))).thenReturn(stepExecution);
 
         LlmMetadata llmMetadata = new LlmMetadata();
@@ -96,7 +99,7 @@ class PersistenceServiceMappingTest {
         assertEquals(
                 "e1",
                 stepExecutionService
-                        .save(new StepExecutionDto("e1", "s1", "DONE", "{}", null, null, null, 1L, BigDecimal.ONE))
+                        .save(new StepExecutionDto("e1", "s1", StepStatus.COMPLETED.toString(), "{}", null, null, null, 1L, BigDecimal.ONE))
                         .executionId());
         assertEquals(
                 "openai",

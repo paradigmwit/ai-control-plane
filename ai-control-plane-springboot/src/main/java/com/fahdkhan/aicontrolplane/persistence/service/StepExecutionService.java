@@ -1,5 +1,6 @@
 package com.fahdkhan.aicontrolplane.persistence.service;
 
+import com.fahdkhan.aicontrolplane.model.StepStatus;
 import com.fahdkhan.aicontrolplane.persistence.dto.StepExecutionDto;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepExecution;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepExecutionId;
@@ -47,7 +48,7 @@ public class StepExecutionService {
         entity.setId(new StepExecutionId(dto.executionId(), dto.stepId()));
         entity.setExecution(executionRepository.getReferenceById(dto.executionId()));
         entity.setStep(stepRepository.getReferenceById(dto.stepId()));
-        entity.setStatus(dto.status());
+        entity.setStatus(StepStatus.valueOf(dto.status()));
         entity.setOutputPayload(dto.outputPayload());
         entity.setErrorMessage(dto.errorMessage());
         entity.setStartedAt(dto.startedAt());
@@ -61,7 +62,7 @@ public class StepExecutionService {
         return new StepExecutionDto(
                 entity.getId().getExecutionId(),
                 entity.getId().getStepId(),
-                entity.getStatus(),
+                entity.getStatus().toString(),
                 entity.getOutputPayload(),
                 entity.getErrorMessage(),
                 entity.getStartedAt(),

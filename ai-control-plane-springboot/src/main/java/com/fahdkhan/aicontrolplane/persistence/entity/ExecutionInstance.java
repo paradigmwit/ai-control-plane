@@ -1,5 +1,6 @@
 package com.fahdkhan.aicontrolplane.persistence.entity;
 
+import com.fahdkhan.aicontrolplane.model.ExecutionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -27,7 +28,7 @@ public class ExecutionInstance {
     private ExecutionPlan plan;
 
     @Column(name = "status", nullable = false)
-    private String status;
+    private ExecutionStatus status;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -63,11 +64,11 @@ public class ExecutionInstance {
         this.plan = plan;
     }
 
-    public String getStatus() {
+    public ExecutionStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ExecutionStatus status) {
         this.status = status;
     }
 

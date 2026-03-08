@@ -1,5 +1,6 @@
 package com.fahdkhan.aicontrolplane.persistence.service;
 
+import com.fahdkhan.aicontrolplane.model.ExecutionStatus;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDto;
 import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionInstance;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionInstanceRepository;
@@ -39,7 +40,7 @@ public class ExecutionInstanceService {
         ExecutionInstance entity = new ExecutionInstance();
         entity.setExecutionId(dto.executionId());
         entity.setPlan(planRepository.getReferenceById(dto.planId()));
-        entity.setStatus(dto.status());
+        entity.setStatus(ExecutionStatus.valueOf(dto.status()));
         entity.setCreatedAt(dto.createdAt());
         entity.setStartedAt(dto.startedAt());
         entity.setCompletedAt(dto.completedAt());
@@ -51,7 +52,7 @@ public class ExecutionInstanceService {
         return new ExecutionInstanceDto(
                 entity.getExecutionId(),
                 entity.getPlan().getPlanId(),
-                entity.getStatus(),
+                entity.getStatus().toString(),
                 entity.getCreatedAt(),
                 entity.getStartedAt(),
                 entity.getCompletedAt(),

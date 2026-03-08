@@ -1,5 +1,6 @@
 package com.fahdkhan.aicontrolplane.persistence.entity;
 
+import com.fahdkhan.aicontrolplane.model.StepStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -29,7 +30,7 @@ public class StepExecution {
     private ExecutionStep step;
 
     @Column(name = "status", nullable = false)
-    private String status;
+    private StepStatus status;
 
     @Column(name = "output_payload", columnDefinition = "json")
     private String outputPayload;
@@ -73,11 +74,11 @@ public class StepExecution {
         this.step = step;
     }
 
-    public String getStatus() {
+    public StepStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(StepStatus status) {
         this.status = status;
     }
 
