@@ -1,15 +1,7 @@
 package com.fahdkhan.aicontrolplane.api;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fahdkhan.aicontrolplane.api.error.GlobalExceptionHandler;
 import com.fahdkhan.aicontrolplane.api.orchestration.ExecutionTimelineResponse;
-import com.fahdkhan.aicontrolplane.api.orchestration.PlanRequest;
 import com.fahdkhan.aicontrolplane.model.ExecutionStatus;
 import com.fahdkhan.aicontrolplane.orchestration.ExecutionCommandService;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionPlanDto;
@@ -19,11 +11,20 @@ import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = OrchestrationController.class)
 @Import(GlobalExceptionHandler.class)
@@ -32,10 +33,10 @@ class OrchestrationControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private ExecutionPlanService executionPlanService;
 
-    @MockBean
+    @MockitoBean
     private ExecutionCommandService executionCommandService;
 
     @Test
