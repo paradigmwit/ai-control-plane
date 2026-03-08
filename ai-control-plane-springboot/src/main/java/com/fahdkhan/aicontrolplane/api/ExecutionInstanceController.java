@@ -1,5 +1,6 @@
 package com.fahdkhan.aicontrolplane.api;
 
+import jakarta.validation.Valid;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDto;
 import com.fahdkhan.aicontrolplane.persistence.service.ExecutionInstanceService;
 import java.util.List;
@@ -37,13 +38,13 @@ public class ExecutionInstanceController {
     }
 
     @PostMapping
-    public ResponseEntity<ExecutionInstanceDto> createExecutionInstance(@RequestBody ExecutionInstanceDto dto) {
+    public ResponseEntity<ExecutionInstanceDto> createExecutionInstance(@Valid @RequestBody ExecutionInstanceDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(executionInstanceService.save(dto));
     }
 
     @PutMapping("/{executionId}")
     public ResponseEntity<ExecutionInstanceDto> upsertExecutionInstance(
-            @PathVariable String executionId, @RequestBody ExecutionInstanceDto dto) {
+            @PathVariable String executionId, @Valid @RequestBody ExecutionInstanceDto dto) {
         ExecutionInstanceDto payload = new ExecutionInstanceDto(
                 executionId,
                 dto.planId(),

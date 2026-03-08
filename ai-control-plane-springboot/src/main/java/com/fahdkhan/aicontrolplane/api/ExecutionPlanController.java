@@ -1,5 +1,6 @@
 package com.fahdkhan.aicontrolplane.api;
 
+import jakarta.validation.Valid;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionPlanDto;
 import com.fahdkhan.aicontrolplane.persistence.service.ExecutionPlanService;
 import java.util.List;
@@ -37,13 +38,13 @@ public class ExecutionPlanController {
     }
 
     @PostMapping
-    public ResponseEntity<ExecutionPlanDto> createExecutionPlan(@RequestBody ExecutionPlanDto dto) {
+    public ResponseEntity<ExecutionPlanDto> createExecutionPlan(@Valid @RequestBody ExecutionPlanDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(executionPlanService.save(dto));
     }
 
     @PutMapping("/{planId}")
     public ResponseEntity<ExecutionPlanDto> upsertExecutionPlan(
-            @PathVariable String planId, @RequestBody ExecutionPlanDto dto) {
+            @PathVariable String planId, @Valid @RequestBody ExecutionPlanDto dto) {
         ExecutionPlanDto payload = new ExecutionPlanDto(planId, dto.metadata(), dto.createdAt());
         return ResponseEntity.ok(executionPlanService.save(payload));
     }

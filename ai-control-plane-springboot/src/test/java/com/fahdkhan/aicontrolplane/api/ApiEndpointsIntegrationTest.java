@@ -19,10 +19,10 @@ class ApiEndpointsIntegrationTest {
     @Test
     void shouldExposeCoreResourceEndpoints() throws Exception {
         mockMvc.perform(get("/api/v1/execution-plans")).andExpect(status().isOk());
-        mockMvc.perform(get("/api/v1/execution-steps")).andExpect(status().isOk());
-        mockMvc.perform(get("/api/v1/step-dependencies")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/execution-plans/p1/steps")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/execution-plans/p1/step-dependencies")).andExpect(status().isOk());
         mockMvc.perform(get("/api/v1/execution-instances")).andExpect(status().isOk());
-        mockMvc.perform(get("/api/v1/step-executions")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/executions/e1/steps")).andExpect(status().isOk());
         mockMvc.perform(get("/api/v1/llm-metadata")).andExpect(status().isOk());
     }
 }

@@ -2,6 +2,7 @@ package com.fahdkhan.aicontrolplane.api;
 
 import com.fahdkhan.aicontrolplane.persistence.dto.StepExecutionDto;
 import com.fahdkhan.aicontrolplane.persistence.service.StepExecutionService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/step-executions")
+@RequestMapping("/api/v1/executions/{executionId}/steps")
 public class StepExecutionController {
 
     private final StepExecutionService stepExecutionService;
@@ -29,7 +30,7 @@ public class StepExecutionController {
         return stepExecutionService.findAll();
     }
 
-    @GetMapping("/{executionId}/steps/{stepId}")
+    @GetMapping("/{stepId}")
     public ResponseEntity<StepExecutionDto> getStepExecution(
             @PathVariable String executionId, @PathVariable String stepId) {
         return stepExecutionService.findById(executionId, stepId)
@@ -38,15 +39,28 @@ public class StepExecutionController {
     }
 
     @PostMapping
-    public ResponseEntity<StepExecutionDto> createStepExecution(@RequestBody StepExecutionDto dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(stepExecutionService.save(dto));
-    }
-
-    @PutMapping("/{executionId}/steps/{stepId}")
-    public ResponseEntity<StepExecutionDto> upsertStepExecution(
-            @PathVariable String executionId, @PathVariable String stepId, @RequestBody StepExecutionDto dto) {
+    public ResponseEntity<StepExecutionDto> createStepExecution(
+            @PathVariable String executionId, @Valid @RequestBody StepExecutionDto dto) {
         StepExecutionDto payload = new StepExecutionDto(
                 executionId,
+                dto.planId(),
+                dto.stepId(),
+                dto.status(),
+                dto.outputPayload(),
+                dto.errorMessage(),
+                dto.startedAt(),
+                dto.completedAt(),
+                dto.executionTimeMs(),
+                dto.stepCost());
+        return ResponseEntity.status(HttpStatus.CREATED).body(stepExecutionService.save(payload));
+    }
+
+    @PutMapping("/{stepId}")
+    public ResponseEntity<StepExecutionDto> upsertStepExecution(
+            @PathVariable String executionId, @PathVariable String stepId, @Valid @RequestBody StepExecutionDto dto) {
+        StepExecutionDto payload = new StepExecutionDto(
+                executionId,
+                dto.planId(),
                 stepId,
                 dto.status(),
                 dto.outputPayload(),
@@ -58,7 +72,7 @@ public class StepExecutionController {
         return ResponseEntity.ok(stepExecutionService.save(payload));
     }
 
-    @DeleteMapping("/{executionId}/steps/{stepId}")
+    @DeleteMapping("/{stepId}")
     public ResponseEntity<Void> deleteStepExecution(@PathVariable String executionId, @PathVariable String stepId) {
         stepExecutionService.deleteById(executionId, stepId);
         return ResponseEntity.noContent().build();

@@ -1,13 +1,16 @@
 package com.fahdkhan.aicontrolplane.persistence.dto;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 
 public record LlmMetadataDto(
-        String executionId,
-        String providerId,
-        String modelName,
-        Integer promptTokens,
-        Integer completionTokens,
-        BigDecimal llmCost,
+        @NotBlank String executionId,
+        @NotBlank String providerId,
+        @NotBlank String modelName,
+        @PositiveOrZero Integer promptTokens,
+        @PositiveOrZero Integer completionTokens,
+        @DecimalMin("0.0") BigDecimal llmCost,
         String rawResponse) {
 }

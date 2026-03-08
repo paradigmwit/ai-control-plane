@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StepDependencyRepository extends JpaRepository<StepDependency, StepDependencyId> {
 
-    List<StepDependency> findByStepStepId(String stepId);
+    List<StepDependency> findByIdPlanIdAndIdStepId(String planId, String stepId);
 }

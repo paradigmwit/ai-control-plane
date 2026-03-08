@@ -1,5 +1,6 @@
 package com.fahdkhan.aicontrolplane.api;
 
+import jakarta.validation.Valid;
 import com.fahdkhan.aicontrolplane.persistence.dto.LlmMetadataDto;
 import com.fahdkhan.aicontrolplane.persistence.service.LlmMetadataService;
 import java.util.List;
@@ -37,13 +38,13 @@ public class LlmMetadataController {
     }
 
     @PostMapping
-    public ResponseEntity<LlmMetadataDto> createLlmMetadata(@RequestBody LlmMetadataDto dto) {
+    public ResponseEntity<LlmMetadataDto> createLlmMetadata(@Valid @RequestBody LlmMetadataDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(llmMetadataService.save(dto));
     }
 
     @PutMapping("/{executionId}")
     public ResponseEntity<LlmMetadataDto> upsertLlmMetadata(
-            @PathVariable String executionId, @RequestBody LlmMetadataDto dto) {
+            @PathVariable String executionId, @Valid @RequestBody LlmMetadataDto dto) {
         LlmMetadataDto payload = new LlmMetadataDto(
                 executionId,
                 dto.providerId(),

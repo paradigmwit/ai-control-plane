@@ -15,9 +15,12 @@ import com.fahdkhan.aicontrolplane.persistence.dto.StepExecutionDto;
 import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionInstance;
 import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionPlan;
 import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionStep;
+import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionStepId;
 import com.fahdkhan.aicontrolplane.persistence.entity.LlmMetadata;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepDependency;
+import com.fahdkhan.aicontrolplane.persistence.entity.StepDependencyId;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepExecution;
+import com.fahdkhan.aicontrolplane.persistence.entity.StepExecutionId;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionInstanceRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionPlanRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionStepRepository;
@@ -27,7 +30,6 @@ import com.fahdkhan.aicontrolplane.persistence.repository.StepExecutionRepositor
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
 import org.mockito.Mockito;
 
 class PersistenceServiceMappingTest {
@@ -49,14 +51,15 @@ class PersistenceServiceMappingTest {
         when(executionPlanRepository.getReferenceById("p1")).thenReturn(plan);
 
         ExecutionStep step = new ExecutionStep();
-        step.setStepId("s1");
+        step.setId(new ExecutionStepId("p1", "s1"));
         step.setPlan(plan);
         step.setToolName("tool");
         when(executionStepRepository.save(any(ExecutionStep.class))).thenReturn(step);
-        when(executionStepRepository.getReferenceById("s1")).thenReturn(step);
+        when(executionStepRepository.getReferenceById(new ExecutionStepId("p1", "s1"))).thenReturn(step);
+        when(executionStepRepository.getReferenceById(new ExecutionStepId("p1", "s0"))).thenReturn(step);
 
         StepDependency dependency = new StepDependency();
-        dependency.setId(new com.fahdkhan.aicontrolplane.persistence.entity.StepDependencyId("s1", "s0"));
+        dependency.setId(new StepDependencyId("p1", "s1", "s0"));
         when(stepDependencyRepository.save(any(StepDependency.class))).thenReturn(dependency);
 
         ExecutionInstance executionInstance = new ExecutionInstance();
@@ -68,7 +71,8 @@ class PersistenceServiceMappingTest {
         when(executionInstanceRepository.getReferenceById("e1")).thenReturn(executionInstance);
 
         StepExecution stepExecution = new StepExecution();
-        stepExecution.setId(new com.fahdkhan.aicontrolplane.persistence.entity.StepExecutionId("e1", "s1"));
+        stepExecution.setId(new StepExecutionId("e1", "s1"));
+        stepExecution.setPlanId("p1");
         stepExecution.setStatus(StepStatus.COMPLETED);
         when(stepExecutionRepository.save(any(StepExecution.class))).thenReturn(stepExecution);
 
@@ -89,7 +93,7 @@ class PersistenceServiceMappingTest {
 
         assertEquals("p1", executionPlanService.save(new ExecutionPlanDto("p1", "{}", plan.getCreatedAt())).planId());
         assertEquals("s1", executionStepService.save(new ExecutionStepDto("s1", "p1", "tool", "{}", "{}")).stepId());
-        assertEquals("s0", stepDependencyService.save(new StepDependencyDto("s1", "s0")).dependsOnStepId());
+        assertEquals("s0", stepDependencyService.save(new StepDependencyDto("p1", "s1", "s0")).dependsOnStepId());
         assertEquals(
                 "e1",
                 executionInstanceService
@@ -99,7 +103,7 @@ class PersistenceServiceMappingTest {
         assertEquals(
                 "e1",
                 stepExecutionService
-                        .save(new StepExecutionDto("e1", "s1", StepStatus.COMPLETED.toString(), "{}", null, null, null, 1L, BigDecimal.ONE))
+                        .save(new StepExecutionDto("e1", "p1", "s1", StepStatus.COMPLETED.toString(), "{}", null, null, null, 1L, BigDecimal.ONE))
                         .executionId());
         assertEquals(
                 "openai",

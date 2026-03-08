@@ -14,7 +14,7 @@ class EntityBeanTest {
         plan.setPlanId("p1");
 
         ExecutionStep step = new ExecutionStep();
-        step.setStepId("s1");
+        step.setId(new ExecutionStepId("p1", "s1"));
         step.setPlan(plan);
 
         ExecutionInstance instance = new ExecutionInstance();
@@ -24,12 +24,13 @@ class EntityBeanTest {
         instance.setCreatedAt(Instant.now());
 
         StepDependency dependency = new StepDependency();
-        dependency.setId(new StepDependencyId("s1", "s0"));
+        dependency.setId(new StepDependencyId("p1", "s1", "s0"));
         dependency.setStep(step);
         dependency.setDependsOnStep(step);
 
         StepExecution stepExecution = new StepExecution();
         stepExecution.setId(new StepExecutionId("e1", "s1"));
+        stepExecution.setPlanId("p1");
         stepExecution.setExecution(instance);
         stepExecution.setStep(step);
 
