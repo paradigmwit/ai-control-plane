@@ -19,7 +19,7 @@ class PersistenceRepositoryContextTest {
     private StepDependencyRepository stepDependencyRepository;
 
     @Autowired
-    private ExecutionInstanceRepository executionInstanceRepository;
+    private InstanceRepository instanceRepository;
 
     @Autowired
     private StepExecutionRepository stepExecutionRepository;
@@ -32,7 +32,7 @@ class PersistenceRepositoryContextTest {
         assertNotNull(executionPlanRepository);
         assertNotNull(executionStepRepository);
         assertNotNull(stepDependencyRepository);
-        assertNotNull(executionInstanceRepository);
+        assertNotNull(instanceRepository);
         assertNotNull(stepExecutionRepository);
         assertNotNull(llmMetadataRepository);
     }

@@ -1,11 +1,10 @@
 package com.fahdkhan.aicontrolplane.persistence.repository;
 
 import com.fahdkhan.aicontrolplane.persistence.entity.StepExecution;
-import com.fahdkhan.aicontrolplane.persistence.entity.StepExecutionId;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface StepExecutionRepository extends JpaRepository<StepExecution, StepExecutionId> {
+public interface StepExecutionRepository extends JpaRepository<StepExecution, String> {
 
-    List<StepExecution> findByExecutionExecutionId(String executionId);
+    List<StepExecution> findByStepExecutionId(String stepExecutionId);
 }

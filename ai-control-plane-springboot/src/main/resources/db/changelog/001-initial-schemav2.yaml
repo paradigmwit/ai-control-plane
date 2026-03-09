@@ -62,10 +62,11 @@ databaseChangeLog:
               - column:
                   name: metadata
                   type: CLOB
-        - addUniqueKey:
+        - addUniqueConstraint:
             schemaName: control_plane
             tableName: step
             columnNames: plan_id, step_id
+            constraintName: uk_step
         - addForeignKeyConstraint:
             baseTableSchemaName: control_plane
             baseTableName: step
@@ -91,6 +92,11 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
+                  name: plan_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
                   name: step_id
                   type: varchar(100)
                   constraints:
@@ -100,18 +106,28 @@ databaseChangeLog:
                   type: varchar(100)
                   constraints:
                     nullable: false
-        - addUniqueKey:
+        - addUniqueConstraint:
             schemaName: control_plane
             tableName: step_dependency
-            columnNames: step_id, depends_on_step_id
+            columnNames: plan_id, step_id, depends_on_step_id
+            constraintName: uk_step_dependency
         - addForeignKeyConstraint:
             baseTableSchemaName: control_plane
             baseTableName: step_dependency
-            baseColumnNames: step_id
+            baseColumnNames: plan_id, step_id
             referencedTableSchemaName: control_plane
             referencedTableName: step
-            referencedColumnNames: step_id
+            referencedColumnNames: plan_id, step_id
             constraintName: fk_dependency_step
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableSchemaName: control_plane
+            baseTableName: step_dependency
+            baseColumnNames: plan_id, depends_on_step_id
+            referencedTableSchemaName: control_plane
+            referencedTableName: step
+            referencedColumnNames: plan_id, step_id
+            constraintName: fk_dependency_parent
             onDelete: CASCADE
 
   - changeSet:
@@ -139,6 +155,7 @@ databaseChangeLog:
               - column:
                   name: created_at
                   type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
               - column:
                   name: started_at
                   type: timestamp
@@ -153,13 +170,13 @@ databaseChangeLog:
             baseTableName: execution_instance
             baseColumnNames: plan_id
             referencedTableSchemaName: control_plane
-            referencedTableName: execution_plan
+            referencedTableName: plan
             referencedColumnNames: plan_id
             constraintName: fk_execution_plan
 
   - changeSet:
       id: 005-create-step-execution
-      author: ai-control-plane
+      author: control-plane
       changes:
         - createTable:
             schemaName: control_plane
@@ -189,7 +206,7 @@ databaseChangeLog:
                   type: CLOB
               - column:
                   name: error_message
-                  type: text
+                  type: CLOB
               - column:
                   name: started_at
                   type: timestamp
@@ -202,10 +219,11 @@ databaseChangeLog:
               - column:
                   name: step_cost
                   type: numeric(12,4)
-        - addUniqueKey:
+        - addUniqueConstraint:
             schemaName: control_plane
             tableName: step_execution
             columnNames: instance_id, step_id
+            constraintName: uk_step_execution
         - addForeignKeyConstraint:
             baseTableSchemaName: control_plane
             baseTableName: step_execution
@@ -256,7 +274,7 @@ databaseChangeLog:
                   type: numeric(12,4)
               - column:
                   name: raw_response
-                  type: text
+                  type: CLOB
         - addForeignKeyConstraint:
             baseTableSchemaName: control_plane
             baseTableName: llm_metadata
@@ -278,7 +296,13 @@ databaseChangeLog:
             columns:
               - column:
                   name: status
-
+        - createIndex:
+            schemaName: control_plane
+            tableName: execution_instance
+            indexName: idx_execution_plan
+            columns:
+              - column:
+                  name: plan_id
         - createIndex:
             schemaName: control_plane
             tableName: step_execution
@@ -288,8 +312,8 @@ databaseChangeLog:
                   name: status
         - createIndex:
             schemaName: control_plane
-            tableName: execution_instance
-            indexName: idx_execution_plan_id
+            tableName: step_execution
+            indexName: idx_step_execution_instance
             columns:
               - column:
-                  name: plan_id
+                  name: instance_id

@@ -2,13 +2,13 @@
 
 erDiagram
 
-    EXECUTION_PLAN {
+    PLAN {
         string plan_id PK
         json   metadata
         timestamp created_at
     }
 
-    EXECUTION_STEP {
+    STEP {
         string step_id PK
         string plan_id FK
         string tool_name
@@ -17,12 +17,14 @@ erDiagram
     }
 
     STEP_DEPENDENCY {
+        string step_dependency_id PK
         string step_id FK
+        string plan_id FK
         string depends_on_step_id FK
     }
 
     EXECUTION_INSTANCE {
-        string execution_id PK
+        string instance_id PK
         string plan_id FK
         string status
         timestamp created_at
@@ -32,7 +34,8 @@ erDiagram
     }
 
     STEP_EXECUTION {
-        string execution_id FK
+        string step_execution_id PK
+        string instance_id FK
         string step_id FK
         string status
         json   output_payload
@@ -44,7 +47,7 @@ erDiagram
     }
 
     LLM_METADATA {
-        string execution_id FK
+        string instance_id FK
         string provider_id
         string model_name
         int prompt_tokens
@@ -53,9 +56,10 @@ erDiagram
         text raw_response
     }
 
-    EXECUTION_PLAN ||--o{ EXECUTION_STEP : contains
-    EXECUTION_STEP ||--o{ STEP_DEPENDENCY : depends_on
-    EXECUTION_PLAN ||--o{ EXECUTION_INSTANCE : executed_as
+    PLAN ||--o{ STEP : contains
+    STEP ||--o{ STEP_DEPENDENCY : depends_on
+    PLAN ||--o{ EXECUTION_INSTANCE : executed_as
     EXECUTION_INSTANCE ||--o{ STEP_EXECUTION : contains
+    STEP ||--o{ STEP_EXECUTION : contains
     EXECUTION_INSTANCE ||--|| LLM_METADATA : has
 ```

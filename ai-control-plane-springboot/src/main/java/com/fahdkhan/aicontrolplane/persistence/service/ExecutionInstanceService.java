@@ -2,8 +2,8 @@ package com.fahdkhan.aicontrolplane.persistence.service;
 
 import com.fahdkhan.aicontrolplane.model.ExecutionStatus;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDto;
-import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionInstance;
-import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionInstanceRepository;
+import com.fahdkhan.aicontrolplane.persistence.entity.Instance;
+import com.fahdkhan.aicontrolplane.persistence.repository.InstanceRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionPlanRepository;
 import java.util.List;
 import java.util.Optional;
@@ -12,12 +12,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class ExecutionInstanceService {
 
-    private final ExecutionInstanceRepository repository;
+    private final InstanceRepository repository;
     private final ExecutionPlanRepository planRepository;
+    private final InstanceRepository instanceRepository;
 
-    public ExecutionInstanceService(ExecutionInstanceRepository repository, ExecutionPlanRepository planRepository) {
+
+    public ExecutionInstanceService(InstanceRepository repository, ExecutionPlanRepository planRepository, InstanceRepository instanceRepository) {
         this.repository = repository;
         this.planRepository = planRepository;
+        this.instanceRepository = instanceRepository;
     }
 
     public ExecutionInstanceDto save(ExecutionInstanceDto dto) {
@@ -36,9 +39,9 @@ public class ExecutionInstanceService {
         repository.deleteById(id);
     }
 
-    private ExecutionInstance toEntity(ExecutionInstanceDto dto) {
-        ExecutionInstance entity = new ExecutionInstance();
-        entity.setExecutionId(dto.executionId());
+    private Instance toEntity(ExecutionInstanceDto dto) {
+        Instance entity = new Instance();
+        entity.setInstanceId(dto.instanceId());
         entity.setPlan(planRepository.getReferenceById(dto.planId()));
         entity.setStatus(ExecutionStatus.valueOf(dto.status()));
         entity.setCreatedAt(dto.createdAt());
@@ -48,9 +51,9 @@ public class ExecutionInstanceService {
         return entity;
     }
 
-    private ExecutionInstanceDto toDto(ExecutionInstance entity) {
+    private ExecutionInstanceDto toDto(Instance entity) {
         return new ExecutionInstanceDto(
-                entity.getExecutionId(),
+                entity.getInstanceId(),
                 entity.getPlan().getPlanId(),
                 entity.getStatus().toString(),
                 entity.getCreatedAt(),

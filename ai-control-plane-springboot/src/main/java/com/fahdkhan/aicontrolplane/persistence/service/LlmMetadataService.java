@@ -2,7 +2,7 @@ package com.fahdkhan.aicontrolplane.persistence.service;
 
 import com.fahdkhan.aicontrolplane.persistence.dto.LlmMetadataDto;
 import com.fahdkhan.aicontrolplane.persistence.entity.LlmMetadata;
-import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionInstanceRepository;
+import com.fahdkhan.aicontrolplane.persistence.repository.InstanceRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.LlmMetadataRepository;
 import java.util.List;
 import java.util.Optional;
@@ -12,13 +12,13 @@ import org.springframework.stereotype.Service;
 public class LlmMetadataService {
 
     private final LlmMetadataRepository repository;
-    private final ExecutionInstanceRepository executionInstanceRepository;
+    private final InstanceRepository instanceRepository;
 
     public LlmMetadataService(
             LlmMetadataRepository repository,
-            ExecutionInstanceRepository executionInstanceRepository) {
+            InstanceRepository instanceRepository) {
         this.repository = repository;
-        this.executionInstanceRepository = executionInstanceRepository;
+        this.instanceRepository = instanceRepository;
     }
 
     public LlmMetadataDto save(LlmMetadataDto dto) {
@@ -39,8 +39,8 @@ public class LlmMetadataService {
 
     private LlmMetadata toEntity(LlmMetadataDto dto) {
         LlmMetadata entity = new LlmMetadata();
-        entity.setExecutionId(dto.executionId());
-        entity.setExecution(executionInstanceRepository.getReferenceById(dto.executionId()));
+        entity.setInstanceId(dto.instanceId());
+        entity.setInstance(instanceRepository.getReferenceById(dto.instanceId()));
         entity.setProviderId(dto.providerId());
         entity.setModelName(dto.modelName());
         entity.setPromptTokens(dto.promptTokens());
@@ -52,7 +52,7 @@ public class LlmMetadataService {
 
     private LlmMetadataDto toDto(LlmMetadata entity) {
         return new LlmMetadataDto(
-                entity.getExecutionId(),
+                entity.getInstanceId(),
                 entity.getProviderId(),
                 entity.getModelName(),
                 entity.getPromptTokens(),
