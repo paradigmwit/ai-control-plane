@@ -37,6 +37,21 @@ public class LlmMetadataService {
         repository.deleteById(id);
     }
 
+    public Optional<LlmMetadataDto> update(String id, LlmMetadataDto dto) {
+        if (!repository.existsById(id)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(save(new LlmMetadataDto(
+                id,
+                dto.providerId(),
+                dto.modelName(),
+                dto.promptTokens(),
+                dto.completionTokens(),
+                dto.llmCost(),
+                dto.rawResponse())));
+    }
+
     private LlmMetadata toEntity(LlmMetadataDto dto) {
         LlmMetadata entity = new LlmMetadata();
         entity.setInstanceId(dto.instanceId());

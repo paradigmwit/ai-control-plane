@@ -32,6 +32,14 @@ public class ExecutionPlanService {
         repository.deleteById(id);
     }
 
+    public Optional<ExecutionPlanDto> update(String id, ExecutionPlanDto dto) {
+        if (!repository.existsById(id)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(save(new ExecutionPlanDto(id, dto.metadata(), dto.createdAt())));
+    }
+
     private Plan toEntity(ExecutionPlanDto dto) {
         Plan entity = new Plan();
         entity.setPlanId(dto.planId());

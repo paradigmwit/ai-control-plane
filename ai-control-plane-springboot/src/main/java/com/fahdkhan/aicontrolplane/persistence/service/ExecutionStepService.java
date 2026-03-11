@@ -35,6 +35,14 @@ public class ExecutionStepService {
         repository.deleteById(id);
     }
 
+    public Optional<ExecutionStepDto> update(String id, ExecutionStepDto dto) {
+        if (!repository.existsById(id)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(save(new ExecutionStepDto(id, dto.planId(), dto.toolName(), dto.inputPayload(), dto.metadata())));
+    }
+
     private ExecutionStep toEntity(ExecutionStepDto dto) {
         ExecutionStep entity = new ExecutionStep();
         entity.setStepId(dto.stepId());

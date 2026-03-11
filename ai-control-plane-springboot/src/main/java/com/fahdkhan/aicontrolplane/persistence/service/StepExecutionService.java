@@ -42,6 +42,24 @@ public class StepExecutionService {
         repository.deleteById(stepExecutionId);
     }
 
+    public Optional<StepExecutionDto> update(String stepExecutionId, StepExecutionDto dto) {
+        if (!repository.existsById(stepExecutionId)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(save(new StepExecutionDto(
+                stepExecutionId,
+                dto.instanceId(),
+                dto.stepId(),
+                dto.status(),
+                dto.outputPayload(),
+                dto.errorMessage(),
+                dto.startedAt(),
+                dto.completedAt(),
+                dto.executionTimeMs(),
+                dto.stepCost())));
+    }
+
     private StepExecution toEntity(StepExecutionDto dto) {
         StepExecution entity = new StepExecution();
         entity.setStepExecutionId(dto.stepExecutionId());
