@@ -39,6 +39,21 @@ public class ExecutionInstanceService {
         repository.deleteById(id);
     }
 
+    public Optional<ExecutionInstanceDto> update(String id, ExecutionInstanceDto dto) {
+        if (!repository.existsById(id)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(save(new ExecutionInstanceDto(
+                id,
+                dto.planId(),
+                dto.status(),
+                dto.createdAt(),
+                dto.startedAt(),
+                dto.completedAt(),
+                dto.totalCost())));
+    }
+
     private Instance toEntity(ExecutionInstanceDto dto) {
         Instance entity = new Instance();
         entity.setInstanceId(dto.instanceId());

@@ -35,6 +35,14 @@ public class StepDependencyService {
         repository.deleteById(stepDependencyId);
     }
 
+    public Optional<StepDependencyDto> update(String stepDependencyId, StepDependencyDto dto) {
+        if (!repository.existsById(stepDependencyId)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(save(new StepDependencyDto(dto.stepId(), dto.dependsOnStep())));
+    }
+
     private StepDependency toEntity(StepDependencyDto dto) {
         StepDependency entity = new StepDependency();
         entity.setId(dto.stepId());
