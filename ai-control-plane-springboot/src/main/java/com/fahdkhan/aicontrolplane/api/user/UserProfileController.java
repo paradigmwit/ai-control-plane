@@ -1,14 +1,15 @@
 package com.fahdkhan.aicontrolplane.api.user;
 
-import com.fahdkhan.aicontrolplane.user.UserProfile;
+import com.fahdkhan.aicontrolplane.security.User;
 import com.fahdkhan.aicontrolplane.user.UserProfileService;
-import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/user/profiles")
+@RequestMapping("/api/admin/profiles")
 public class UserProfileController {
 
     private final UserProfileService userProfileService;
@@ -18,7 +19,7 @@ public class UserProfileController {
     }
 
     @GetMapping
-    public List<UserProfile> listUsers() {
+    public List<User> listUsers() {
         return userProfileService.listSeededUsers();
     }
 }

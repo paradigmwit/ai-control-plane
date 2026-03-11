@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fahdkhan.aicontrolplane.security.Role;
 import java.util.List;
+
+import com.fahdkhan.aicontrolplane.security.User;
 import org.junit.jupiter.api.Test;
 
 class UserProfileServiceTest {
@@ -13,10 +15,10 @@ class UserProfileServiceTest {
     void shouldReturnAdminAndUserProfiles() {
         UserProfileService service = new UserProfileService();
 
-        List<UserProfile> users = service.listSeededUsers();
+        List<User> users = service.listSeededUsers();
 
         assertEquals(2, users.size());
-        assertTrue(users.stream().anyMatch(user -> user.role() == Role.ADMIN && user.email().contains("admin")));
-        assertTrue(users.stream().anyMatch(user -> user.role() == Role.USER && user.email().contains("user")));
+        assertTrue(users.stream().anyMatch(user -> user.getRole() == Role.ROLE_ADMIN && user.getName().contains("admin")));
+        assertTrue(users.stream().anyMatch(user -> user.getRole() == Role.ROLE_USER && user.getName().contains("user")));
     }
 }
