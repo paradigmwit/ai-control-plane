@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/profiles")
+@RequestMapping("/api/user/profiles")
 public class UserProfileController {
 
     private final UserProfileService userProfileService;
