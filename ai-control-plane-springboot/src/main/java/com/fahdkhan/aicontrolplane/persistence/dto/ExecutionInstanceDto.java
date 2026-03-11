@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 public record ExecutionInstanceDto(
-        String executionId,
+        String instanceId,
         String planId,
         String status,
         Instant createdAt,

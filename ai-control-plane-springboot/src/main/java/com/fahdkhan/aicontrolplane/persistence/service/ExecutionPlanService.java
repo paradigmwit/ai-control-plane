@@ -1,7 +1,7 @@
 package com.fahdkhan.aicontrolplane.persistence.service;
 
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionPlanDto;
-import com.fahdkhan.aicontrolplane.persistence.entity.ExecutionPlan;
+import com.fahdkhan.aicontrolplane.persistence.entity.Plan;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionPlanRepository;
 import java.util.List;
 import java.util.Optional;
@@ -32,15 +32,15 @@ public class ExecutionPlanService {
         repository.deleteById(id);
     }
 
-    private ExecutionPlan toEntity(ExecutionPlanDto dto) {
-        ExecutionPlan entity = new ExecutionPlan();
+    private Plan toEntity(ExecutionPlanDto dto) {
+        Plan entity = new Plan();
         entity.setPlanId(dto.planId());
         entity.setMetadata(dto.metadata());
         entity.setCreatedAt(dto.createdAt());
         return entity;
     }
 
-    private ExecutionPlanDto toDto(ExecutionPlan entity) {
+    private ExecutionPlanDto toDto(Plan entity) {
         return new ExecutionPlanDto(entity.getPlanId(), entity.getMetadata(), entity.getCreatedAt());
     }
 }

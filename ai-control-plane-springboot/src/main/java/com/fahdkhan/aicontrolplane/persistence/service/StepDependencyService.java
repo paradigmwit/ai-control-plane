@@ -2,7 +2,6 @@ package com.fahdkhan.aicontrolplane.persistence.service;
 
 import com.fahdkhan.aicontrolplane.persistence.dto.StepDependencyDto;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepDependency;
-import com.fahdkhan.aicontrolplane.persistence.entity.StepDependencyId;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionStepRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.StepDependencyRepository;
 import java.util.List;
@@ -24,27 +23,27 @@ public class StepDependencyService {
         return toDto(repository.save(toEntity(dto)));
     }
 
-    public Optional<StepDependencyDto> findById(String stepId, String dependsOnStepId) {
-        return repository.findById(new StepDependencyId(stepId, dependsOnStepId)).map(this::toDto);
+    public Optional<StepDependencyDto> findById(String stepDependencyId) {
+        return repository.findById(stepDependencyId).map(this::toDto);
     }
 
     public List<StepDependencyDto> findAll() {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
-    public void deleteById(String stepId, String dependsOnStepId) {
-        repository.deleteById(new StepDependencyId(stepId, dependsOnStepId));
+    public void deleteById(String stepDependencyId) {
+        repository.deleteById(stepDependencyId);
     }
 
     private StepDependency toEntity(StepDependencyDto dto) {
         StepDependency entity = new StepDependency();
-        entity.setId(new StepDependencyId(dto.stepId(), dto.dependsOnStepId()));
+        entity.setId(dto.stepId());
         entity.setStep(stepRepository.getReferenceById(dto.stepId()));
-        entity.setDependsOnStep(stepRepository.getReferenceById(dto.dependsOnStepId()));
+        entity.setDependsOnStep(stepRepository.getReferenceById(dto.dependsOnStep()));
         return entity;
     }
 
     private StepDependencyDto toDto(StepDependency entity) {
-        return new StepDependencyDto(entity.getId().getStepId(), entity.getId().getDependsOnStepId());
+        return new StepDependencyDto(entity.getId(), entity.getDependsOnStep().getStepId());
     }
 }

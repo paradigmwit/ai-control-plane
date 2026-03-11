@@ -1,51 +1,28 @@
 package com.fahdkhan.aicontrolplane.persistence.entity;
 
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "step_dependency", schema = "control_plane")
+@Getter
+@Setter
 public class StepDependency {
 
-    @EmbeddedId
-    private StepDependencyId id;
+    @Id
+    @Column(name = "step_dependency_id", nullable = false)
+    private String id;
 
-    @MapsId("stepId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plan_id", nullable = false)
+    private Plan plan;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "step_id", nullable = false)
     private ExecutionStep step;
 
-    @MapsId("dependsOnStepId")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "depends_on_step_id", nullable = false)
     private ExecutionStep dependsOnStep;
-
-    public StepDependencyId getId() {
-        return id;
-    }
-
-    public void setId(StepDependencyId id) {
-        this.id = id;
-    }
-
-    public ExecutionStep getStep() {
-        return step;
-    }
-
-    public void setStep(ExecutionStep step) {
-        this.step = step;
-    }
-
-    public ExecutionStep getDependsOnStep() {
-        return dependsOnStep;
-    }
-
-    public void setDependsOnStep(ExecutionStep dependsOnStep) {
-        this.dependsOnStep = dependsOnStep;
-    }
 }

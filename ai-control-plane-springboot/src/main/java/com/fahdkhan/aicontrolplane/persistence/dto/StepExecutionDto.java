@@ -4,7 +4,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 public record StepExecutionDto(
-        String executionId,
+        String stepExecutionId,
+        String instanceId,
         String stepId,
         String status,
         String outputPayload,
