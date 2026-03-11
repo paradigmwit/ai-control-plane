@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 100-create-app-user-table
+      author: ai-control-plane
+      changes:
+        - createTable:
+            schemaName: control_plane
+            tableName: app_user
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(320)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            schemaName: control_plane
+            tableName: app_user
+            columnNames: email
+            constraintName: uk_app_user_email
+
+        - sql:
+            dbms: h2,postgresql
+            splitStatements: false
+            stripComments: true
+            sql: ALTER TABLE control_plane.app_user ADD CONSTRAINT chk_app_user_role CHECK (role IN ('ROLE_ADMIN', 'ROLE_USER'));
