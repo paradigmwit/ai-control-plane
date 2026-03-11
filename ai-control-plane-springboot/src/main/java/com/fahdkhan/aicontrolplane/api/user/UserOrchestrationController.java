@@ -8,6 +8,7 @@ import com.fahdkhan.aicontrolplane.persistence.dto.StepExecutionDto;
 import com.fahdkhan.aicontrolplane.persistence.service.ExecutionInstanceService;
 import com.fahdkhan.aicontrolplane.persistence.service.ExecutionPlanService;
 import com.fahdkhan.aicontrolplane.persistence.service.StepExecutionService;
+import com.fahdkhan.aicontrolplane.user.CurrencyConversionWorkflowService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -28,14 +29,27 @@ public class UserOrchestrationController {
     private final ExecutionPlanService executionPlanService;
     private final ExecutionInstanceService executionInstanceService;
     private final StepExecutionService stepExecutionService;
+    private final CurrencyConversionWorkflowService currencyConversionWorkflowService;
 
     public UserOrchestrationController(
             ExecutionPlanService executionPlanService,
             ExecutionInstanceService executionInstanceService,
-            StepExecutionService stepExecutionService) {
+            StepExecutionService stepExecutionService,
+            CurrencyConversionWorkflowService currencyConversionWorkflowService) {
         this.executionPlanService = executionPlanService;
         this.executionInstanceService = executionInstanceService;
         this.stepExecutionService = stepExecutionService;
+        this.currencyConversionWorkflowService = currencyConversionWorkflowService;
+    }
+
+    @PostMapping("/workflows/currency-conversion/execute")
+    public ResponseEntity<CurrencyConversionWorkflowResponse> executeCurrencyConversionWorkflow(
+            @RequestBody CurrencyConversionWorkflowRequest request) {
+        try {
+            return ResponseEntity.ok(currencyConversionWorkflowService.execute(request.prompt()));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PostMapping("/plan")
