@@ -27,6 +27,12 @@ spring:
         default_schema: control_plane
     show-sql: true
 
+  springdoc:
+    api-docs:
+        enabled: true
+    show-login-endpoint: true
+    enable-spring-security: true
+
 logging:
   level:
     liquibase: DEBUG
