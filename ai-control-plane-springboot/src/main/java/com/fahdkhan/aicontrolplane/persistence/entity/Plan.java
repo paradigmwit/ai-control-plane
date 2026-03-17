@@ -13,7 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "execution_plan", schema = "control_plane")
+@Table(name = "plan", schema = "control_plane")
 @Getter
 @Setter
 public class Plan {

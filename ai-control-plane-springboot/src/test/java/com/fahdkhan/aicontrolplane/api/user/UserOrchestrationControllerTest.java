@@ -11,9 +11,12 @@ import com.fahdkhan.aicontrolplane.persistence.dto.StepExecutionDto;
 import com.fahdkhan.aicontrolplane.persistence.service.ExecutionInstanceService;
 import com.fahdkhan.aicontrolplane.persistence.service.ExecutionPlanService;
 import com.fahdkhan.aicontrolplane.persistence.service.StepExecutionService;
+import com.fahdkhan.aicontrolplane.user.CurrencyConversionWorkflowService;
+import com.fahdkhan.aicontrolplane.api.user.CurrencyConversionWorkflowResponse;
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 class UserOrchestrationControllerTest {
@@ -24,7 +27,10 @@ class UserOrchestrationControllerTest {
         when(planService.save(any())).thenReturn(new ExecutionPlanDto("p1", "{}", Instant.now()));
 
         UserOrchestrationController controller = new UserOrchestrationController(
-                planService, mock(ExecutionInstanceService.class), mock(StepExecutionService.class));
+                planService,
+                mock(ExecutionInstanceService.class),
+                mock(StepExecutionService.class),
+                mock(CurrencyConversionWorkflowService.class));
 
         var response = controller.createPlan(
                 new UserOrchestrationRequest("task", "meta"),
@@ -40,7 +46,10 @@ class UserOrchestrationControllerTest {
                 .thenReturn(new ExecutionInstanceDto("i1", "p1", "RUNNING", Instant.now(), Instant.now(), null, BigDecimal.ZERO));
 
         UserOrchestrationController controller = new UserOrchestrationController(
-                mock(ExecutionPlanService.class), instanceService, mock(StepExecutionService.class));
+                mock(ExecutionPlanService.class),
+                instanceService,
+                mock(StepExecutionService.class),
+                mock(CurrencyConversionWorkflowService.class));
 
         assertEquals("i1", controller.executePlan("p1").instanceId());
     }
@@ -52,8 +61,44 @@ class UserOrchestrationControllerTest {
                 .thenReturn(new StepExecutionDto("se1", "i1", "s1", "COMPLETED", "{}", null, Instant.now(), Instant.now(), 0L, BigDecimal.ZERO));
 
         UserOrchestrationController controller = new UserOrchestrationController(
-                mock(ExecutionPlanService.class), mock(ExecutionInstanceService.class), stepExecutionService);
+                mock(ExecutionPlanService.class),
+                mock(ExecutionInstanceService.class),
+                stepExecutionService,
+                mock(CurrencyConversionWorkflowService.class));
 
         assertEquals("COMPLETED", controller.markStepCompleted("i1", "s1").status());
+    }
+
+    @Test
+    void shouldExecuteCurrencyConversionWorkflow() {
+        CurrencyConversionWorkflowService workflowService = mock(CurrencyConversionWorkflowService.class);
+        when(workflowService.execute("convert 50 usd to eur"))
+                .thenReturn(new CurrencyConversionWorkflowResponse("p1", "i1", "{}"));
+
+        UserOrchestrationController controller = new UserOrchestrationController(
+                mock(ExecutionPlanService.class),
+                mock(ExecutionInstanceService.class),
+                mock(StepExecutionService.class),
+                workflowService);
+
+        var response = controller.executeCurrencyConversionWorkflow(new CurrencyConversionWorkflowRequest("convert 50 usd to eur"));
+
+        assertEquals("i1", response.getBody().instanceId());
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidCurrencyPrompt() {
+        CurrencyConversionWorkflowService workflowService = mock(CurrencyConversionWorkflowService.class);
+        when(workflowService.execute("bad prompt")).thenThrow(new IllegalArgumentException("bad"));
+
+        UserOrchestrationController controller = new UserOrchestrationController(
+                mock(ExecutionPlanService.class),
+                mock(ExecutionInstanceService.class),
+                mock(StepExecutionService.class),
+                workflowService);
+
+        var response = controller.executeCurrencyConversionWorkflow(new CurrencyConversionWorkflowRequest("bad prompt"));
+
+        assertEquals(HttpStatusCode.valueOf(400), response.getStatusCode());
     }
 }

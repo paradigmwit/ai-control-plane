@@ -15,7 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "execution_step", schema = "control_plane")
+@Table(name = "step", schema = "control_plane")
 @Getter
 @Setter
 public class ExecutionStep {

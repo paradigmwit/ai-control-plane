@@ -18,7 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "execution_instance", schema = "control_plane")
+@Table(name = "instance", schema = "control_plane")
 @Getter
 @Setter
 @NoArgsConstructor
