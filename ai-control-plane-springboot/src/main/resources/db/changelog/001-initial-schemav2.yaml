@@ -136,7 +136,7 @@ databaseChangeLog:
       changes:
         - createTable:
             schemaName: control_plane
-            tableName: execution_instance
+            tableName: instance
             columns:
               - column:
                   name: instance_id
@@ -167,7 +167,7 @@ databaseChangeLog:
                   type: numeric(12,4)
         - addForeignKeyConstraint:
             baseTableSchemaName: control_plane
-            baseTableName: execution_instance
+            baseTableName: instance
             baseColumnNames: plan_id
             referencedTableSchemaName: control_plane
             referencedTableName: plan
@@ -229,9 +229,9 @@ databaseChangeLog:
             baseTableName: step_execution
             baseColumnNames: instance_id
             referencedTableSchemaName: control_plane
-            referencedTableName: execution_instance
+            referencedTableName: instance
             referencedColumnNames: instance_id
-            constraintName: fk_step_execution_instance
+            constraintName: fk_step_instance
             onDelete: CASCADE
         - addForeignKeyConstraint:
             baseTableSchemaName: control_plane
@@ -280,7 +280,7 @@ databaseChangeLog:
             baseTableName: llm_metadata
             baseColumnNames: instance_id
             referencedTableSchemaName: control_plane
-            referencedTableName: execution_instance
+            referencedTableName: instance
             referencedColumnNames: instance_id
             constraintName: fk_llm_execution
             onDelete: CASCADE
@@ -291,14 +291,14 @@ databaseChangeLog:
       changes:
         - createIndex:
             schemaName: control_plane
-            tableName: execution_instance
+            tableName: instance
             indexName: idx_execution_status
             columns:
               - column:
                   name: status
         - createIndex:
             schemaName: control_plane
-            tableName: execution_instance
+            tableName: instance
             indexName: idx_execution_plan
             columns:
               - column:
@@ -313,7 +313,7 @@ databaseChangeLog:
         - createIndex:
             schemaName: control_plane
             tableName: step_execution
-            indexName: idx_step_execution_instance
+            indexName: idx_step_instance
             columns:
               - column:
                   name: instance_id
