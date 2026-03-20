@@ -1,6 +1,7 @@
 package com.fahdkhan.aicontrolplane.api.admin;
 
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDto;
+import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDetailsDto;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionPlanDto;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionStepDto;
 import com.fahdkhan.aicontrolplane.persistence.dto.LlmMetadataDto;
@@ -140,8 +141,24 @@ public class AdminPersistenceController {
     }
 
     @GetMapping("/instances/{id}")
-    public ResponseEntity<ExecutionInstanceDto> getInstance(@PathVariable String id) {
-        return executionInstanceService.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<ExecutionInstanceDetailsDto> getInstance(@PathVariable String id) {
+        return executionInstanceService.findById(id)
+                .map(instance -> {
+                    ExecutionPlanDto plan = executionPlanService.findById(instance.planId()).orElse(null);
+                    List<ExecutionStepDto> steps = executionStepService.findByPlanId(instance.planId());
+                    List<StepDependencyDto> dependencies = stepDependencyService.findByPlanId(instance.planId());
+                    List<StepExecutionDto> stepExecutions = stepExecutionService.findByInstanceId(id);
+                    LlmMetadataDto llmMetadata = llmMetadataService.findById(id).orElse(null);
+
+                    return ResponseEntity.ok(new ExecutionInstanceDetailsDto(
+                            instance,
+                            plan,
+                            steps,
+                            dependencies,
+                            stepExecutions,
+                            llmMetadata));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/instances/{id}")

@@ -31,6 +31,10 @@ public class StepDependencyService {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
+    public List<StepDependencyDto> findByPlanId(String planId) {
+        return repository.findByPlanPlanId(planId).stream().map(this::toDto).toList();
+    }
+
     public void deleteById(String stepDependencyId) {
         repository.deleteById(stepDependencyId);
     }

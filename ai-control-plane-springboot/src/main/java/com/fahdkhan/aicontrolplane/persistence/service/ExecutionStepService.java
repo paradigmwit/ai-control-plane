@@ -31,6 +31,10 @@ public class ExecutionStepService {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
+    public List<ExecutionStepDto> findByPlanId(String planId) {
+        return repository.findByPlanPlanId(planId).stream().map(this::toDto).toList();
+    }
+
     public void deleteById(String id) {
         repository.deleteById(id);
     }

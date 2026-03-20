@@ -38,6 +38,10 @@ public class StepExecutionService {
         return repository.findAll().stream().map(this::toDto).toList();
     }
 
+    public List<StepExecutionDto> findByInstanceId(String instanceId) {
+        return repository.findByInstanceInstanceId(instanceId).stream().map(this::toDto).toList();
+    }
+
     public void deleteById(String stepExecutionId) {
         repository.deleteById(stepExecutionId);
     }
