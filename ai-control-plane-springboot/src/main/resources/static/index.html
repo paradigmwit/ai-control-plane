@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Control Plane</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #07111f;
+            --panel: rgba(11, 25, 44, 0.9);
+            --panel-muted: rgba(16, 37, 68, 0.72);
+            --border: rgba(114, 179, 255, 0.18);
+            --text: #ecf4ff;
+            --muted: #9fb6d7;
+            --accent: #6ec8ff;
+            --accent-strong: #917cff;
+            --success: #4fe0a2;
+            --shadow: 0 18px 48px rgba(0, 0, 0, 0.3);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, "Segoe UI", Roboto, sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(110, 200, 255, 0.12), transparent 28%),
+                radial-gradient(circle at left center, rgba(145, 124, 255, 0.1), transparent 24%),
+                linear-gradient(180deg, #09121f 0%, #07111f 100%);
+            color: var(--text);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            padding: 28px 20px;
+            border-right: 1px solid var(--border);
+            background: rgba(5, 13, 24, 0.86);
+        }
+
+        .brand {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .brand-mark {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, rgba(110, 200, 255, 0.18), rgba(145, 124, 255, 0.2));
+            border: 1px solid rgba(110, 200, 255, 0.2);
+        }
+
+        .brand h1,
+        .section-header h2,
+        .panel-header h3,
+        .timeline-header h3,
+        .instance-summary strong,
+        .timeline-item strong {
+            margin: 0;
+        }
+
+        .brand p,
+        .section-header p,
+        .panel-header p,
+        .timeline-header p,
+        .nav-label,
+        .nav-meta,
+        label,
+        .input-help,
+        .empty-state,
+        .timeline-item p,
+        .timeline-item time,
+        .response small,
+        .instance-summary span {
+            color: var(--muted);
+        }
+
+        .nav {
+            display: grid;
+            gap: 10px;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            color: var(--text);
+            border: 1px solid transparent;
+            background: rgba(16, 37, 68, 0.52);
+            border-radius: 16px;
+            padding: 14px;
+            display: grid;
+            gap: 4px;
+            transition: border-color 140ms ease, transform 140ms ease;
+        }
+
+        .nav-item:hover,
+        .nav-item:focus-visible,
+        .nav-item.active {
+            border-color: rgba(110, 200, 255, 0.28);
+            transform: translateX(2px);
+            outline: none;
+        }
+
+        .main {
+            padding: 28px;
+            display: grid;
+            gap: 22px;
+        }
+
+        .section-header,
+        .card,
+        .history-shell,
+        .timeline {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: end;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(110, 200, 255, 0.2);
+            background: rgba(110, 200, 255, 0.08);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .card,
+        .timeline,
+        .history-shell {
+            padding: 22px;
+        }
+
+        .panel-header,
+        .timeline-header {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            background: rgba(110, 200, 255, 0.08);
+            border: 1px solid rgba(110, 200, 255, 0.16);
+        }
+
+        form {
+            display: grid;
+            gap: 14px;
+        }
+
+        label {
+            display: grid;
+            gap: 8px;
+            font-size: 0.92rem;
+        }
+
+        textarea,
+        button {
+            font: inherit;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            resize: vertical;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(110, 200, 255, 0.18);
+            background: rgba(3, 11, 21, 0.72);
+            color: var(--text);
+        }
+
+        textarea:focus {
+            outline: 2px solid rgba(110, 200, 255, 0.24);
+            border-color: rgba(110, 200, 255, 0.36);
+        }
+
+        button {
+            width: fit-content;
+            border: 0;
+            border-radius: 14px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, var(--accent), #8effd6);
+            color: #06101f;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(110, 200, 255, 0.18);
+        }
+
+        button.secondary {
+            background: rgba(145, 124, 255, 0.16);
+            color: var(--text);
+            box-shadow: none;
+            border: 1px solid rgba(145, 124, 255, 0.24);
+        }
+
+        .response {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(3, 11, 21, 0.7);
+            border: 1px solid rgba(110, 200, 255, 0.1);
+            min-height: 104px;
+        }
+
+        .response pre {
+            margin: 8px 0 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #dff5ff;
+        }
+
+        .history-layout {
+            display: grid;
+            grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+            gap: 18px;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .instance-item {
+            width: 100%;
+            border: 1px solid rgba(110, 200, 255, 0.08);
+            background: rgba(12, 23, 39, 0.86);
+            border-radius: 16px;
+            padding: 14px;
+            text-align: left;
+            color: var(--text);
+            box-shadow: none;
+        }
+
+        .instance-item.active {
+            border-color: rgba(110, 200, 255, 0.3);
+            background: rgba(16, 37, 68, 0.68);
+        }
+
+        .instance-summary {
+            display: grid;
+            gap: 4px;
+        }
+
+        .pill {
+            display: inline-flex;
+            width: fit-content;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(79, 224, 162, 0.12);
+            border: 1px solid rgba(79, 224, 162, 0.2);
+            color: var(--success);
+            font-size: 0.78rem;
+            margin-top: 8px;
+        }
+
+        .timeline-stream {
+            display: grid;
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 0 0 0 22px;
+            min-height: 48px;
+        }
+
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            box-shadow: 0 0 0 6px rgba(110, 200, 255, 0.08);
+        }
+
+        .timeline-item::after {
+            content: "";
+            position: absolute;
+            left: 8px;
+            top: 20px;
+            bottom: -18px;
+            width: 1px;
+            background: rgba(110, 200, 255, 0.16);
+        }
+
+        .timeline-item:last-child::after {
+            display: none;
+        }
+
+        .timeline-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 1024px) {
+            .layout,
+            .content-grid,
+            .history-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+            }
+        }
+
+        @media (max-width: 720px) {
+            .main { padding: 20px; }
+            .section-header,
+            .card,
+            .history-shell,
+            .timeline { border-radius: 18px; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar" aria-label="Primary navigation">
+        <div class="brand">
+            <div class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 64 64" width="24" height="24" fill="none">
+                    <path d="M20 32c0-6.627 5.373-12 12-12h12v24H32c-6.627 0-12-5.373-12-12Z" stroke="#6EC8FF" stroke-width="4"/>
+                    <path d="M44 18v28" stroke="#917CFF" stroke-width="4" stroke-linecap="round"/>
+                    <circle cx="32" cy="32" r="4" fill="#8EFFD6"/>
+                </svg>
+            </div>
+            <div>
+                <h1>AI Control Plane</h1>
+                <p>Minimal workflow console</p>
+            </div>
+        </div>
+
+        <nav class="nav">
+            <a class="nav-item active" href="#workflow">
+                <span class="nav-label">Workflow</span>
+                <span class="nav-meta">Currency conversion</span>
+            </a>
+            <a class="nav-item" href="#history">
+                <span class="nav-label">Execution history</span>
+                <span class="nav-meta">Your instances & timeline</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <section class="section-header">
+            <div>
+                <div class="badge">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path d="M8 1.5 9.7 5l3.8.6-2.7 2.7.6 3.9L8 10.4 4.6 12.2l.6-3.9L2.5 5.6 6.3 5 8 1.5Z" stroke="#6EC8FF" stroke-width="1.2" stroke-linejoin="round"/>
+                    </svg>
+                    Governed execution workspace
+                </div>
+                <h2 style="margin-top: 14px; font-size: clamp(1.8rem, 4vw, 2.8rem);">AI Control Plane</h2>
+                <p>Run the currency conversion workflow and review your execution history in a single focused view.</p>
+            </div>
+            <svg viewBox="0 0 220 140" width="220" height="140" aria-hidden="true">
+                <rect x="26" y="20" width="168" height="100" rx="24" fill="rgba(9,22,37,0.86)" stroke="rgba(110,200,255,0.22)"/>
+                <rect x="44" y="38" width="132" height="14" rx="7" fill="rgba(110,200,255,0.14)"/>
+                <rect x="44" y="64" width="74" height="34" rx="16" fill="rgba(145,124,255,0.18)"/>
+                <rect x="126" y="64" width="50" height="34" rx="16" fill="rgba(110,200,255,0.14)"/>
+                <path d="M68 81h28" stroke="#917CFF" stroke-width="6" stroke-linecap="round"/>
+                <path d="M143 81h16" stroke="#6EC8FF" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="184" cy="30" r="10" fill="rgba(110,200,255,0.14)"/>
+                <circle cx="184" cy="30" r="4" fill="#6EC8FF"/>
+            </svg>
+        </section>
+
+        <section class="content-grid">
+            <article class="card" id="workflow">
+                <div class="panel-header">
+                    <div>
+                        <h3>Workflow</h3>
+                        <p>POST /api/user/orchestration/workflows/currency-conversion/execute</p>
+                    </div>
+                    <div class="icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M7 7.5c0-1.7 2-3 5-3s5 1.3 5 3-1.6 2.6-5 3-5 1.3-5 3 2 3 5 3 5-1.3 5-3" stroke="#6EC8FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                </div>
+                <form id="workflow-form">
+                    <label>
+                        Prompt
+                        <textarea name="prompt" placeholder="Convert 200 USD to EUR"></textarea>
+                    </label>
+                    <div class="input-help">The workflow creates an execution instance and stores it under the current user.</div>
+                    <button type="submit">Run workflow</button>
+                </form>
+                <div class="response" id="workflow-response">
+                    <p class="empty-state">Workflow responses appear here. A successful run will refresh execution history automatically.</p>
+                </div>
+            </article>
+
+            <article class="history-shell" id="history">
+                <div class="panel-header">
+                    <div>
+                        <h3>Execution history</h3>
+                        <p>GET /api/user/orchestration/executions</p>
+                    </div>
+                    <button class="secondary" id="refresh-history" type="button">Refresh</button>
+                </div>
+                <div class="history-layout">
+                    <section>
+                        <div class="history-list" id="history-list">
+                            <p class="empty-state">No executions yet for this user.</p>
+                        </div>
+                    </section>
+                    <aside class="timeline">
+                        <div class="timeline-header">
+                            <div>
+                                <h3>Timeline</h3>
+                                <p>Select an instance to inspect status, timestamps, and step progression.</p>
+                            </div>
+                        </div>
+                        <div id="timeline-content">
+                            <p class="empty-state">Choose an instance from the history list to load its timeline.</p>
+                        </div>
+                    </aside>
+                </div>
+            </article>
+        </section>
+    </main>
+</div>
+
+<script>
+    const workflowResponse = document.getElementById('workflow-response');
+    const historyList = document.getElementById('history-list');
+    const timelineContent = document.getElementById('timeline-content');
+    const workflowForm = document.getElementById('workflow-form');
+    const refreshHistoryButton = document.getElementById('refresh-history');
+    let selectedInstanceId = null;
+
+    const formatJson = (target, payload, label = 'Response payload') => {
+        target.innerHTML = `<small>${label}</small><pre>${JSON.stringify(payload, null, 2)}</pre>`;
+    };
+
+    const formatDate = (value) => {
+        if (!value) {
+            return '—';
+        }
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+    };
+
+    const normalizeArray = (value) => Array.isArray(value) ? value : [];
+
+    const loadTimeline = async (instanceId) => {
+        selectedInstanceId = instanceId;
+        timelineContent.innerHTML = '<p class="empty-state">Loading timeline…</p>';
+
+        try {
+            const [instanceResponse, stepsResponse] = await Promise.all([
+                fetch(`/api/user/orchestration/executions/${encodeURIComponent(instanceId)}`, { headers: { Accept: 'application/json' } }),
+                fetch(`/api/user/orchestration/executions/${encodeURIComponent(instanceId)}/steps`, { headers: { Accept: 'application/json' } })
+            ]);
+
+            const instance = instanceResponse.ok ? await instanceResponse.json() : null;
+            const steps = stepsResponse.ok ? normalizeArray(await stepsResponse.json()) : [];
+
+            if (!instance) {
+                timelineContent.innerHTML = '<p class="empty-state">Unable to load that instance.</p>';
+                return;
+            }
+
+            const events = [
+                { title: 'Execution created', timestamp: instance.createdAt, details: `Plan ${instance.planId}` },
+                { title: 'Execution started', timestamp: instance.startedAt, details: `Status ${instance.status}` },
+                { title: 'Execution completed', timestamp: instance.completedAt, details: instance.completedAt ? `Total cost ${instance.totalCost}` : 'Waiting for completion' },
+                ...steps.map((step) => ({
+                    title: step.stepId,
+                    timestamp: step.completedAt || step.startedAt,
+                    details: step.status
+                }))
+            ].filter((event) => event.timestamp || event.details);
+
+            timelineContent.innerHTML = `
+                <div class="instance-summary">
+                    <strong>${instance.instanceId}</strong>
+                    <span>User: ${instance.userId}</span>
+                    <span>Plan: ${instance.planId}</span>
+                    <span>Created: ${formatDate(instance.createdAt)}</span>
+                    <span class="pill">${instance.status}</span>
+                </div>
+                <div class="timeline-stream">
+                    ${events.map((event) => `
+                        <article class="timeline-item">
+                            <strong>${event.title}</strong>
+                            <div class="timeline-meta">
+                                <time>${formatDate(event.timestamp)}</time>
+                                <span>${event.details || ''}</span>
+                            </div>
+                        </article>
+                    `).join('') || '<p class="empty-state">No timeline events are available yet.</p>'}
+                </div>
+            `;
+        } catch (error) {
+            timelineContent.innerHTML = `<p class="empty-state">${error.message}</p>`;
+        }
+    };
+
+    const renderHistory = (items) => {
+        const executions = normalizeArray(items);
+        if (!executions.length) {
+            historyList.innerHTML = '<p class="empty-state">No executions yet for this user.</p>';
+            timelineContent.innerHTML = '<p class="empty-state">Choose an instance from the history list to load its timeline.</p>';
+            return;
+        }
+
+        historyList.innerHTML = executions.map((instance) => `
+            <button class="instance-item ${instance.instanceId === selectedInstanceId ? 'active' : ''}" type="button" data-instance-id="${instance.instanceId}">
+                <div class="instance-summary">
+                    <strong>${instance.instanceId}</strong>
+                    <span>${formatDate(instance.createdAt)}</span>
+                    <span>Plan ${instance.planId}</span>
+                    <span class="pill">${instance.status}</span>
+                </div>
+            </button>
+        `).join('');
+
+        historyList.querySelectorAll('[data-instance-id]').forEach((button) => {
+            button.addEventListener('click', () => loadTimeline(button.dataset.instanceId));
+        });
+
+        const nextSelection = executions.find((instance) => instance.instanceId === selectedInstanceId)?.instanceId
+            || executions[0].instanceId;
+        loadTimeline(nextSelection);
+    };
+
+    const loadHistory = async () => {
+        historyList.innerHTML = '<p class="empty-state">Loading execution history…</p>';
+        try {
+            const response = await fetch('/api/user/orchestration/executions', {
+                headers: { Accept: 'application/json' }
+            });
+            const data = response.ok ? await response.json() : [];
+            renderHistory(data);
+        } catch (error) {
+            historyList.innerHTML = `<p class="empty-state">${error.message}</p>`;
+        }
+    };
+
+    workflowForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const submitButton = workflowForm.querySelector('button[type="submit"]');
+        const originalLabel = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Running…';
+
+        try {
+            const payload = Object.fromEntries(new FormData(workflowForm).entries());
+            const response = await fetch('/api/user/orchestration/workflows/currency-conversion/execute', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = response.ok ? await response.json() : { status: response.status, message: 'Workflow request failed.' };
+            formatJson(workflowResponse, data, response.ok ? 'Workflow response' : 'Workflow error');
+
+            if (response.ok) {
+                selectedInstanceId = data.instanceId || selectedInstanceId;
+                await loadHistory();
+            }
+        } catch (error) {
+            formatJson(workflowResponse, { message: error.message }, 'Workflow error');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = originalLabel;
+        }
+    });
+
+    refreshHistoryButton.addEventListener('click', loadHistory);
+    loadHistory();
+</script>
+</body>
+</html>

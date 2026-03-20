@@ -40,6 +40,10 @@ public class CurrencyConversionWorkflowService {
     }
 
     public CurrencyConversionWorkflowResponse execute(String prompt) {
+        return execute(prompt, "anonymousUser");
+    }
+
+    public CurrencyConversionWorkflowResponse execute(String prompt, String userId) {
         ConversionInput input = parsePrompt(prompt);
         ExchangeRateQuote exchangeRateQuote = exchangeRateProvider.resolveRate(input.sourceCurrency(), input.targetCurrency());
         BigDecimal convertedAmount = input.amount().multiply(exchangeRateQuote.exchangeRate()).setScale(4, RoundingMode.HALF_UP);
@@ -50,6 +54,7 @@ public class CurrencyConversionWorkflowService {
         executionInstanceService.save(new ExecutionInstanceDto(
                 instanceId,
                 PLAN_ID,
+                userId,
                 ExecutionStatus.COMPLETED.name(),
                 now,
                 now,

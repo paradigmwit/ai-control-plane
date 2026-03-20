@@ -84,7 +84,7 @@ class PersistenceServiceMappingTest {
         ExecutionStepService executionStepService = new ExecutionStepService(executionStepRepository, executionPlanRepository);
         StepDependencyService stepDependencyService = new StepDependencyService(stepDependencyRepository, executionStepRepository);
         ExecutionInstanceService executionInstanceService =
-                new ExecutionInstanceService(instanceRepository, executionPlanRepository, instanceRepository);
+                new ExecutionInstanceService(instanceRepository, executionPlanRepository);
         StepExecutionService stepExecutionService =
                 new StepExecutionService(stepExecutionRepository, instanceRepository, executionStepRepository);
         LlmMetadataService llmMetadataService = new LlmMetadataService(llmMetadataRepository, instanceRepository);
@@ -96,7 +96,7 @@ class PersistenceServiceMappingTest {
                 "e1",
                 executionInstanceService
                         .save(new ExecutionInstanceDto(
-                                "e1", "p1", "RUNNING", instance.getCreatedAt(), null, null, BigDecimal.ONE))
+                                "e1", "p1", "user", "RUNNING", instance.getCreatedAt(), null, null, BigDecimal.ONE))
                         .instanceId());
         assertEquals(
                 "e1",

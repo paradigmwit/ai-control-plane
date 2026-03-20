@@ -317,3 +317,25 @@ databaseChangeLog:
             columns:
               - column:
                   name: instance_id
+
+  - changeSet:
+      id: 007-add-instance-user-id
+      author: ai-control-plane
+      changes:
+        - addColumn:
+            schemaName: control_plane
+            tableName: instance
+            columns:
+              - column:
+                  name: user_id
+                  type: varchar(100)
+                  defaultValue: anonymousUser
+                  constraints:
+                    nullable: false
+        - createIndex:
+            schemaName: control_plane
+            tableName: instance
+            indexName: idx_instance_user
+            columns:
+              - column:
+                  name: user_id

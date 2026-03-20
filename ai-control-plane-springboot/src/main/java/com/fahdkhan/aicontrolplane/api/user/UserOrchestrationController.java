@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/user/orchestration")
 public class UserOrchestrationController {
 
+    private static final String ANONYMOUS_USER = "anonymousUser";
+
     private final ExecutionPlanService executionPlanService;
     private final ExecutionInstanceService executionInstanceService;
     private final StepExecutionService stepExecutionService;
@@ -43,9 +45,10 @@ public class UserOrchestrationController {
 
     @PostMapping("/workflows/currency-conversion/execute")
     public ResponseEntity<CurrencyConversionWorkflowResponse> executeCurrencyConversionWorkflow(
-            @RequestBody CurrencyConversionWorkflowRequest request) {
+            @RequestBody CurrencyConversionWorkflowRequest request,
+            Authentication authentication) {
         try {
-            return ResponseEntity.ok(currencyConversionWorkflowService.execute(request.prompt()));
+            return ResponseEntity.ok(currencyConversionWorkflowService.execute(request.prompt(), currentUserId(authentication)));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
@@ -55,21 +58,28 @@ public class UserOrchestrationController {
     public ExecutionPlanDto createPlan(@RequestBody UserOrchestrationRequest request, Authentication authentication) {
         String planId = "plan-" + UUID.randomUUID();
         String metadata = "{\"taskSummary\":\"" + request.taskSummary() + "\",\"createdBy\":\""
-                + authentication.getName() + "\",\"metadata\":\"" + request.metadata() + "\"}";
+                + currentUserId(authentication) + "\",\"metadata\":\"" + request.metadata() + "\"}";
         return executionPlanService.save(new ExecutionPlanDto(planId, metadata, Instant.now()));
     }
 
     @PostMapping("/execute/{planId}")
-    public ExecutionInstanceDto executePlan(@PathVariable String planId) {
+    public ExecutionInstanceDto executePlan(@PathVariable String planId, Authentication authentication) {
         String instanceId = "instance-" + UUID.randomUUID();
+        String userId = currentUserId(authentication);
         return executionInstanceService.save(new ExecutionInstanceDto(
                 instanceId,
                 planId,
+                userId,
                 ExecutionStatus.RUNNING.name(),
                 Instant.now(),
                 Instant.now(),
                 null,
                 BigDecimal.ZERO));
+    }
+
+    @GetMapping("/executions")
+    public List<ExecutionInstanceDto> executionHistory(Authentication authentication) {
+        return executionInstanceService.findByUserId(currentUserId(authentication));
     }
 
     @GetMapping("/executions/{instanceId}")
@@ -95,5 +105,12 @@ public class UserOrchestrationController {
         } catch (IllegalStateException ex) {
             return ResponseEntity.status(409).build();
         }
+    }
+
+    private String currentUserId(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null || authentication.getName().isBlank()) {
+            return ANONYMOUS_USER;
+        }
+        return authentication.getName();
     }
 }

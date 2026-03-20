@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDto;
@@ -44,7 +45,7 @@ class UserOrchestrationControllerTest {
     void shouldStartExecution() {
         ExecutionInstanceService instanceService = mock(ExecutionInstanceService.class);
         when(instanceService.save(any()))
-                .thenReturn(new ExecutionInstanceDto("i1", "p1", "RUNNING", Instant.now(), Instant.now(), null, BigDecimal.ZERO));
+                .thenReturn(new ExecutionInstanceDto("i1", "p1", "user", "RUNNING", Instant.now(), Instant.now(), null, BigDecimal.ZERO));
 
         UserOrchestrationController controller = new UserOrchestrationController(
                 mock(ExecutionPlanService.class),
@@ -52,7 +53,7 @@ class UserOrchestrationControllerTest {
                 mock(StepExecutionService.class),
                 mock(CurrencyConversionWorkflowService.class));
 
-        assertEquals("i1", controller.executePlan("p1").instanceId());
+        assertEquals("i1", controller.executePlan("p1", new UsernamePasswordAuthenticationToken("user", "n/a")).instanceId());
     }
 
     @Test
@@ -109,9 +110,25 @@ class UserOrchestrationControllerTest {
     }
 
     @Test
+    void shouldReturnExecutionHistoryForCurrentUser() {
+        ExecutionInstanceService instanceService = mock(ExecutionInstanceService.class);
+        when(instanceService.findByUserId("user"))
+                .thenReturn(java.util.List.of(new ExecutionInstanceDto("i1", "p1", "user", "RUNNING", Instant.now(), Instant.now(), null, BigDecimal.ZERO)));
+
+        UserOrchestrationController controller = new UserOrchestrationController(
+                mock(ExecutionPlanService.class),
+                instanceService,
+                mock(StepExecutionService.class),
+                mock(CurrencyConversionWorkflowService.class));
+
+        assertEquals(1, controller.executionHistory(new UsernamePasswordAuthenticationToken("user", "n/a")).size());
+        verify(instanceService).findByUserId("user");
+    }
+
+    @Test
     void shouldExecuteCurrencyConversionWorkflow() {
         CurrencyConversionWorkflowService workflowService = mock(CurrencyConversionWorkflowService.class);
-        when(workflowService.execute("convert 50 usd to eur"))
+        when(workflowService.execute("convert 50 usd to eur", "user"))
                 .thenReturn(new CurrencyConversionWorkflowResponse("p1", "i1", "{}"));
 
         UserOrchestrationController controller = new UserOrchestrationController(
@@ -120,7 +137,9 @@ class UserOrchestrationControllerTest {
                 mock(StepExecutionService.class),
                 workflowService);
 
-        var response = controller.executeCurrencyConversionWorkflow(new CurrencyConversionWorkflowRequest("convert 50 usd to eur"));
+        var response = controller.executeCurrencyConversionWorkflow(
+                new CurrencyConversionWorkflowRequest("convert 50 usd to eur"),
+                new UsernamePasswordAuthenticationToken("user", "n/a"));
 
         assertEquals("i1", response.getBody().instanceId());
     }
@@ -128,7 +147,7 @@ class UserOrchestrationControllerTest {
     @Test
     void shouldReturnBadRequestForInvalidCurrencyPrompt() {
         CurrencyConversionWorkflowService workflowService = mock(CurrencyConversionWorkflowService.class);
-        when(workflowService.execute("bad prompt")).thenThrow(new IllegalArgumentException("bad"));
+        when(workflowService.execute("bad prompt", "user")).thenThrow(new IllegalArgumentException("bad"));
 
         UserOrchestrationController controller = new UserOrchestrationController(
                 mock(ExecutionPlanService.class),
@@ -136,7 +155,9 @@ class UserOrchestrationControllerTest {
                 mock(StepExecutionService.class),
                 workflowService);
 
-        var response = controller.executeCurrencyConversionWorkflow(new CurrencyConversionWorkflowRequest("bad prompt"));
+        var response = controller.executeCurrencyConversionWorkflow(
+                new CurrencyConversionWorkflowRequest("bad prompt"),
+                new UsernamePasswordAuthenticationToken("user", "n/a"));
 
         assertEquals(HttpStatusCode.valueOf(400), response.getStatusCode());
     }

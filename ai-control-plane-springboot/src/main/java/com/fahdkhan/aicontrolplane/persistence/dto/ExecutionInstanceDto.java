@@ -6,6 +6,7 @@ import java.time.Instant;
 public record ExecutionInstanceDto(
         String instanceId,
         String planId,
+        String userId,
         String status,
         Instant createdAt,
         Instant startedAt,

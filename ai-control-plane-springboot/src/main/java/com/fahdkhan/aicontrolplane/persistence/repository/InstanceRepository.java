@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface InstanceRepository extends JpaRepository<Instance, String> {
 
     List<Instance> findByPlanPlanId(String planId);
+
+    List<Instance> findByUserIdOrderByCreatedAtDesc(String userId);
 }
