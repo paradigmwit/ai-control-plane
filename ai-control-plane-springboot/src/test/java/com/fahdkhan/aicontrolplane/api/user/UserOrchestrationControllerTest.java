@@ -44,7 +44,7 @@ class UserOrchestrationControllerTest {
     void shouldStartExecution() {
         ExecutionInstanceService instanceService = mock(ExecutionInstanceService.class);
         when(instanceService.save(any()))
-                .thenReturn(new ExecutionInstanceDto("i1", "p1", "RUNNING", Instant.now(), Instant.now(), null, BigDecimal.ZERO));
+                .thenReturn(new ExecutionInstanceDto("i1", "p1", "RUNNING", Instant.now(), Instant.now(), null, BigDecimal.ZERO, null));
 
         UserOrchestrationController controller = new UserOrchestrationController(
                 mock(ExecutionPlanService.class),

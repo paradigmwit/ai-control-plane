@@ -16,7 +16,7 @@ class PersistenceDtoTest {
         ExecutionStepDto executionStepDto = new ExecutionStepDto("s1", "p1", "tool", "{}", "{}");
         StepDependencyDto stepDependencyDto = new StepDependencyDto("s1", "s0");
         ExecutionInstanceDto executionInstanceDto =
-                new ExecutionInstanceDto("e1", "p1", "RUNNING", now, now, now, BigDecimal.ONE);
+                new ExecutionInstanceDto("e1", "p1", "RUNNING", now, now, now, BigDecimal.ONE, null);
         StepExecutionDto stepExecutionDto =
                 new StepExecutionDto("e1", "i1", "s1", "DONE", "{}", null, now, now, 42L, BigDecimal.TEN);
         LlmMetadataDto llmMetadataDto =

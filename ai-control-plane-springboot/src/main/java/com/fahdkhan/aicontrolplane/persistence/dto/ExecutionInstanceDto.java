@@ -10,5 +10,6 @@ public record ExecutionInstanceDto(
         Instant createdAt,
         Instant startedAt,
         Instant completedAt,
-        BigDecimal totalCost) {
+        BigDecimal totalCost,
+        String errorPayload) {
 }

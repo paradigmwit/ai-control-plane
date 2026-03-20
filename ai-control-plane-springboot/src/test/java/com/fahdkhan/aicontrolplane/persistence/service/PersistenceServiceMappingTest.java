@@ -96,7 +96,7 @@ class PersistenceServiceMappingTest {
                 "e1",
                 executionInstanceService
                         .save(new ExecutionInstanceDto(
-                                "e1", "p1", "RUNNING", instance.getCreatedAt(), null, null, BigDecimal.ONE))
+                                "e1", "p1", "RUNNING", instance.getCreatedAt(), null, null, BigDecimal.ONE, null))
                         .instanceId());
         assertEquals(
                 "e1",

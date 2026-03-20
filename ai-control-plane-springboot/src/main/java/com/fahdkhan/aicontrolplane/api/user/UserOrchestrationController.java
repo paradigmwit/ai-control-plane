@@ -69,7 +69,8 @@ public class UserOrchestrationController {
                 Instant.now(),
                 Instant.now(),
                 null,
-                BigDecimal.ZERO));
+                BigDecimal.ZERO,
+                null));
     }
 
     @GetMapping("/executions/{instanceId}")

@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-add-instance-error-payload
+      author: openai-codex
+      changes:
+        - addColumn:
+            schemaName: control_plane
+            tableName: instance
+            columns:
+              - column:
+                  name: error_payload
+                  type: CLOB

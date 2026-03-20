@@ -10,12 +10,15 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "instance", schema = "control_plane")
@@ -48,6 +51,9 @@ public class Instance {
 
     @Column(name = "total_cost", precision = 19, scale = 4)
     private BigDecimal totalCost;
+
+    @Column(name = "error_payload", columnDefinition = "CLOB")
+    private String errorPayload;
 
     @OneToMany(mappedBy = "instance")
     private Set<StepExecution> stepExecutions = new LinkedHashSet<>();

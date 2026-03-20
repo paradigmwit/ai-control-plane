@@ -3,8 +3,8 @@ package com.fahdkhan.aicontrolplane.persistence.service;
 import com.fahdkhan.aicontrolplane.model.ExecutionStatus;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDto;
 import com.fahdkhan.aicontrolplane.persistence.entity.Instance;
-import com.fahdkhan.aicontrolplane.persistence.repository.InstanceRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionPlanRepository;
+import com.fahdkhan.aicontrolplane.persistence.repository.InstanceRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -16,8 +16,10 @@ public class ExecutionInstanceService {
     private final ExecutionPlanRepository planRepository;
     private final InstanceRepository instanceRepository;
 
-
-    public ExecutionInstanceService(InstanceRepository repository, ExecutionPlanRepository planRepository, InstanceRepository instanceRepository) {
+    public ExecutionInstanceService(
+            InstanceRepository repository,
+            ExecutionPlanRepository planRepository,
+            InstanceRepository instanceRepository) {
         this.repository = repository;
         this.planRepository = planRepository;
         this.instanceRepository = instanceRepository;
@@ -51,7 +53,8 @@ public class ExecutionInstanceService {
                 dto.createdAt(),
                 dto.startedAt(),
                 dto.completedAt(),
-                dto.totalCost())));
+                dto.totalCost(),
+                dto.errorPayload())));
     }
 
     private Instance toEntity(ExecutionInstanceDto dto) {
@@ -63,6 +66,7 @@ public class ExecutionInstanceService {
         entity.setStartedAt(dto.startedAt());
         entity.setCompletedAt(dto.completedAt());
         entity.setTotalCost(dto.totalCost());
+        entity.setErrorPayload(dto.errorPayload());
         return entity;
     }
 
@@ -74,6 +78,7 @@ public class ExecutionInstanceService {
                 entity.getCreatedAt(),
                 entity.getStartedAt(),
                 entity.getCompletedAt(),
-                entity.getTotalCost());
+                entity.getTotalCost(),
+                entity.getErrorPayload());
     }
 }

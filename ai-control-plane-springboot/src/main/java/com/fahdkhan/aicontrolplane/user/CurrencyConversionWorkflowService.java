@@ -14,6 +14,9 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 public class CurrencyConversionWorkflowService {
@@ -29,71 +32,119 @@ public class CurrencyConversionWorkflowService {
     private final ExecutionInstanceService executionInstanceService;
     private final StepExecutionService stepExecutionService;
     private final ExchangeRateProvider exchangeRateProvider;
+    private final CurrencyConversionWorkflowFailurePersistenceService failurePersistenceService;
 
     public CurrencyConversionWorkflowService(
             ExecutionInstanceService executionInstanceService,
             StepExecutionService stepExecutionService,
-            ExchangeRateProvider exchangeRateProvider) {
+            ExchangeRateProvider exchangeRateProvider,
+            CurrencyConversionWorkflowFailurePersistenceService failurePersistenceService) {
         this.executionInstanceService = executionInstanceService;
         this.stepExecutionService = stepExecutionService;
         this.exchangeRateProvider = exchangeRateProvider;
+        this.failurePersistenceService = failurePersistenceService;
     }
 
+    @Transactional
     public CurrencyConversionWorkflowResponse execute(String prompt) {
-        ConversionInput input = parsePrompt(prompt);
-        ExchangeRateQuote exchangeRateQuote = exchangeRateProvider.resolveRate(input.sourceCurrency(), input.targetCurrency());
-        BigDecimal convertedAmount = input.amount().multiply(exchangeRateQuote.exchangeRate()).setScale(4, RoundingMode.HALF_UP);
-
         String instanceId = "instance-" + UUID.randomUUID();
-        Instant now = Instant.now();
+        Instant executionStartedAt = Instant.now();
+        String currentStepExecutionId = null;
+        String currentStepId = null;
+        Instant currentStepStartedAt = null;
 
         executionInstanceService.save(new ExecutionInstanceDto(
                 instanceId,
                 PLAN_ID,
-                ExecutionStatus.COMPLETED.name(),
-                now,
-                now,
-                now,
-                BigDecimal.ZERO));
-
-        stepExecutionService.save(new StepExecutionDto(
-                "step-exec-" + UUID.randomUUID(),
-                instanceId,
-                PARSE_STEP_ID,
-                StepStatus.COMPLETED.name(),
-                buildParseOutputJson(input),
+                ExecutionStatus.RUNNING.name(),
+                executionStartedAt,
+                executionStartedAt,
                 null,
-                now,
-                now,
+                BigDecimal.ZERO,
+                null));
+
+        try {
+            currentStepId = PARSE_STEP_ID;
+            currentStepExecutionId = "step-exec-" + UUID.randomUUID();
+            currentStepStartedAt = Instant.now();
+            saveRunningStep(instanceId, currentStepExecutionId, currentStepId, currentStepStartedAt);
+            ConversionInput input = parsePrompt(prompt);
+            completeStep(instanceId, currentStepExecutionId, currentStepId, currentStepStartedAt, buildParseOutputJson(input));
+
+            currentStepId = RATE_STEP_ID;
+            currentStepExecutionId = "step-exec-" + UUID.randomUUID();
+            currentStepStartedAt = Instant.now();
+            saveRunningStep(instanceId, currentStepExecutionId, currentStepId, currentStepStartedAt);
+            ExchangeRateQuote exchangeRateQuote = exchangeRateProvider.resolveRate(input.sourceCurrency(), input.targetCurrency());
+            completeStep(instanceId, currentStepExecutionId, currentStepId, currentStepStartedAt, buildRateOutputJson(input, exchangeRateQuote));
+
+            currentStepId = CONVERT_STEP_ID;
+            currentStepExecutionId = "step-exec-" + UUID.randomUUID();
+            currentStepStartedAt = Instant.now();
+            saveRunningStep(instanceId, currentStepExecutionId, currentStepId, currentStepStartedAt);
+            BigDecimal convertedAmount = input.amount().multiply(exchangeRateQuote.exchangeRate()).setScale(4, RoundingMode.HALF_UP);
+            String conversionOutput = buildConversionOutputJson(input, exchangeRateQuote, convertedAmount);
+            completeStep(instanceId, currentStepExecutionId, currentStepId, currentStepStartedAt, conversionOutput);
+
+            Instant completedAt = Instant.now();
+            executionInstanceService.save(new ExecutionInstanceDto(
+                    instanceId,
+                    PLAN_ID,
+                    ExecutionStatus.COMPLETED.name(),
+                    executionStartedAt,
+                    executionStartedAt,
+                    completedAt,
+                    BigDecimal.ZERO,
+                    null));
+
+            return new CurrencyConversionWorkflowResponse(PLAN_ID, instanceId, conversionOutput);
+        } catch (RuntimeException ex) {
+            Instant failedAt = Instant.now();
+            markTransactionForRollback();
+            failurePersistenceService.persistFailure(
+                    instanceId,
+                    currentStepExecutionId,
+                    currentStepId,
+                    executionStartedAt,
+                    currentStepStartedAt != null ? currentStepStartedAt : executionStartedAt,
+                    failedAt,
+                    buildErrorPayload(ex));
+            throw ex;
+        }
+    }
+
+    private void saveRunningStep(String instanceId, String stepExecutionId, String stepId, Instant startedAt) {
+        stepExecutionService.save(new StepExecutionDto(
+                stepExecutionId,
+                instanceId,
+                stepId,
+                StepStatus.RUNNING.name(),
+                null,
+                null,
+                startedAt,
+                null,
                 0L,
                 BigDecimal.ZERO));
+    }
 
+    private void completeStep(
+            String instanceId,
+            String stepExecutionId,
+            String stepId,
+            Instant startedAt,
+            String outputPayload) {
+        Instant completedAt = Instant.now();
         stepExecutionService.save(new StepExecutionDto(
-                "step-exec-" + UUID.randomUUID(),
+                stepExecutionId,
                 instanceId,
-                RATE_STEP_ID,
+                stepId,
                 StepStatus.COMPLETED.name(),
-                buildRateOutputJson(input, exchangeRateQuote),
+                outputPayload,
                 null,
-                now,
-                now,
-                0L,
+                startedAt,
+                completedAt,
+                Math.max(0L, completedAt.toEpochMilli() - startedAt.toEpochMilli()),
                 BigDecimal.ZERO));
-
-        String conversionOutput = buildConversionOutputJson(input, exchangeRateQuote, convertedAmount);
-        stepExecutionService.save(new StepExecutionDto(
-                "step-exec-" + UUID.randomUUID(),
-                instanceId,
-                CONVERT_STEP_ID,
-                StepStatus.COMPLETED.name(),
-                conversionOutput,
-                null,
-                now,
-                now,
-                0L,
-                BigDecimal.ZERO));
-
-        return new CurrencyConversionWorkflowResponse(PLAN_ID, instanceId, conversionOutput);
     }
 
     private ConversionInput parsePrompt(String prompt) {
@@ -142,6 +193,27 @@ public class CurrencyConversionWorkflowService {
                 quote.rateSource(),
                 quote.rateTimestamp(),
                 quote.stale());
+    }
+
+
+    private void markTransactionForRollback() {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+        }
+    }
+
+    private String buildErrorPayload(RuntimeException ex) {
+        return String.format(
+                "{\"error_type\":\"%s\",\"message\":\"%s\"}",
+                ex.getClass().getSimpleName(),
+                escapeJson(ex.getMessage()));
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private record ConversionInput(BigDecimal amount, String sourceCurrency, String targetCurrency) {

@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/001-initial-schemav2.yaml
   - include:
       file: db/changelog/002-security-users.yaml
+  - include:
+      file: db/changelog/003-instance-error-payload.yaml
