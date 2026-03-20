@@ -10,7 +10,6 @@ import com.fahdkhan.aicontrolplane.persistence.service.StepExecutionService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,28 +26,23 @@ public class CurrencyConversionWorkflowService {
     private static final Pattern PROMPT_PATTERN = Pattern.compile(
             "(?i).*?([0-9]+(?:\\.[0-9]+)?)\\s*([a-z]{3})\\s*(?:to|in|into)\\s*([a-z]{3}).*");
 
-    private static final Map<String, BigDecimal> USD_VALUE_BY_CURRENCY = Map.of(
-            "USD", BigDecimal.ONE,
-            "EUR", new BigDecimal("1.08"),
-            "GBP", new BigDecimal("1.27"),
-            "JPY", new BigDecimal("0.0067"),
-            "INR", new BigDecimal("0.012"),
-            "PKR", new BigDecimal("0.0036"));
-
     private final ExecutionInstanceService executionInstanceService;
     private final StepExecutionService stepExecutionService;
+    private final ExchangeRateProvider exchangeRateProvider;
 
     public CurrencyConversionWorkflowService(
             ExecutionInstanceService executionInstanceService,
-            StepExecutionService stepExecutionService) {
+            StepExecutionService stepExecutionService,
+            ExchangeRateProvider exchangeRateProvider) {
         this.executionInstanceService = executionInstanceService;
         this.stepExecutionService = stepExecutionService;
+        this.exchangeRateProvider = exchangeRateProvider;
     }
 
     public CurrencyConversionWorkflowResponse execute(String prompt) {
         ConversionInput input = parsePrompt(prompt);
-        BigDecimal exchangeRate = getExchangeRate(input.sourceCurrency(), input.targetCurrency());
-        BigDecimal convertedAmount = input.amount().multiply(exchangeRate).setScale(4, RoundingMode.HALF_UP);
+        ExchangeRateQuote exchangeRateQuote = exchangeRateProvider.resolveRate(input.sourceCurrency(), input.targetCurrency());
+        BigDecimal convertedAmount = input.amount().multiply(exchangeRateQuote.exchangeRate()).setScale(4, RoundingMode.HALF_UP);
 
         String instanceId = "instance-" + UUID.randomUUID();
         Instant now = Instant.now();
@@ -79,14 +73,14 @@ public class CurrencyConversionWorkflowService {
                 instanceId,
                 RATE_STEP_ID,
                 StepStatus.COMPLETED.name(),
-                buildRateOutputJson(input.sourceCurrency(), input.targetCurrency(), exchangeRate),
+                buildRateOutputJson(input, exchangeRateQuote),
                 null,
                 now,
                 now,
                 0L,
                 BigDecimal.ZERO));
 
-        String conversionOutput = buildConversionOutputJson(input, exchangeRate, convertedAmount);
+        String conversionOutput = buildConversionOutputJson(input, exchangeRateQuote, convertedAmount);
         stepExecutionService.save(new StepExecutionDto(
                 "step-exec-" + UUID.randomUUID(),
                 instanceId,
@@ -112,17 +106,7 @@ public class CurrencyConversionWorkflowService {
         String sourceCurrency = matcher.group(2).toUpperCase();
         String targetCurrency = matcher.group(3).toUpperCase();
 
-        if (!USD_VALUE_BY_CURRENCY.containsKey(sourceCurrency) || !USD_VALUE_BY_CURRENCY.containsKey(targetCurrency)) {
-            throw new IllegalArgumentException("Only USD, EUR, GBP, JPY, INR, and PKR are supported.");
-        }
-
         return new ConversionInput(amount, sourceCurrency, targetCurrency);
-    }
-
-    private BigDecimal getExchangeRate(String sourceCurrency, String targetCurrency) {
-        BigDecimal sourceInUsd = USD_VALUE_BY_CURRENCY.get(sourceCurrency);
-        BigDecimal targetInUsd = USD_VALUE_BY_CURRENCY.get(targetCurrency);
-        return sourceInUsd.divide(targetInUsd, 8, RoundingMode.HALF_UP);
     }
 
     private String buildParseOutputJson(ConversionInput input) {
@@ -133,22 +117,31 @@ public class CurrencyConversionWorkflowService {
                 input.targetCurrency());
     }
 
-    private String buildRateOutputJson(String sourceCurrency, String targetCurrency, BigDecimal exchangeRate) {
+    private String buildRateOutputJson(ConversionInput input, ExchangeRateQuote quote) {
         return String.format(
-                "{\"source_currency\":\"%s\",\"target_currency\":\"%s\",\"exchange_rate\":%s}",
-                sourceCurrency,
-                targetCurrency,
-                exchangeRate.toPlainString());
+                "{\"source_currency\":\"%s\",\"target_currency\":\"%s\",\"exchange_rate\":%s,\"rate_source\":\"%s\",\"rate_timestamp\":\"%s\",\"rate_confidence\":%s,\"rate_version\":\"%s\",\"rate_stale\":%s}",
+                input.sourceCurrency(),
+                input.targetCurrency(),
+                quote.exchangeRate().toPlainString(),
+                quote.rateSource(),
+                quote.rateTimestamp(),
+                quote.confidence().toPlainString(),
+                quote.version(),
+                quote.stale());
     }
 
-    private String buildConversionOutputJson(ConversionInput input, BigDecimal exchangeRate, BigDecimal convertedAmount) {
+    private String buildConversionOutputJson(
+            ConversionInput input, ExchangeRateQuote quote, BigDecimal convertedAmount) {
         return String.format(
-                "{\"source_amount\":%s,\"source_currency\":\"%s\",\"target_currency\":\"%s\",\"exchange_rate\":%s,\"converted_amount\":%s}",
+                "{\"source_amount\":%s,\"source_currency\":\"%s\",\"target_currency\":\"%s\",\"exchange_rate\":%s,\"converted_amount\":%s,\"rate_source\":\"%s\",\"rate_timestamp\":\"%s\",\"rate_stale\":%s}",
                 input.amount().toPlainString(),
                 input.sourceCurrency(),
                 input.targetCurrency(),
-                exchangeRate.toPlainString(),
-                convertedAmount.toPlainString());
+                quote.exchangeRate().toPlainString(),
+                convertedAmount.toPlainString(),
+                quote.rateSource(),
+                quote.rateTimestamp(),
+                quote.stale());
     }
 
     private record ConversionInput(BigDecimal amount, String sourceCurrency, String targetCurrency) {
