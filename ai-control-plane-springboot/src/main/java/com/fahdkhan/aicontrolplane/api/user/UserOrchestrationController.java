@@ -1,7 +1,6 @@
 package com.fahdkhan.aicontrolplane.api.user;
 
 import com.fahdkhan.aicontrolplane.model.ExecutionStatus;
-import com.fahdkhan.aicontrolplane.model.StepStatus;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionInstanceDto;
 import com.fahdkhan.aicontrolplane.persistence.dto.ExecutionPlanDto;
 import com.fahdkhan.aicontrolplane.persistence.dto.StepExecutionDto;
@@ -88,17 +87,13 @@ public class UserOrchestrationController {
     }
 
     @PostMapping("/executions/{instanceId}/steps/{stepId}/complete")
-    public StepExecutionDto markStepCompleted(@PathVariable String instanceId, @PathVariable String stepId) {
-        return stepExecutionService.save(new StepExecutionDto(
-                "step-exec-" + UUID.randomUUID(),
-                instanceId,
-                stepId,
-                StepStatus.COMPLETED.name(),
-                "{}",
-                null,
-                Instant.now(),
-                Instant.now(),
-                0L,
-                BigDecimal.ZERO));
+    public ResponseEntity<StepExecutionDto> markStepCompleted(@PathVariable String instanceId, @PathVariable String stepId) {
+        try {
+            return stepExecutionService.completeStepExecution(instanceId, stepId)
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(409).build();
+        }
     }
 }

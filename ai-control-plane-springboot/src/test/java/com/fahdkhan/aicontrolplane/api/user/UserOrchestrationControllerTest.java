@@ -1,6 +1,7 @@
 package com.fahdkhan.aicontrolplane.api.user;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -57,8 +58,8 @@ class UserOrchestrationControllerTest {
     @Test
     void shouldMarkStepCompleted() {
         StepExecutionService stepExecutionService = mock(StepExecutionService.class);
-        when(stepExecutionService.save(any()))
-                .thenReturn(new StepExecutionDto("se1", "i1", "s1", "COMPLETED", "{}", null, Instant.now(), Instant.now(), 0L, BigDecimal.ZERO));
+        when(stepExecutionService.completeStepExecution("i1", "s1"))
+                .thenReturn(java.util.Optional.of(new StepExecutionDto("se1", "i1", "s1", "COMPLETED", "{}", null, Instant.now(), Instant.now(), 0L, BigDecimal.ZERO)));
 
         UserOrchestrationController controller = new UserOrchestrationController(
                 mock(ExecutionPlanService.class),
@@ -66,7 +67,45 @@ class UserOrchestrationControllerTest {
                 stepExecutionService,
                 mock(CurrencyConversionWorkflowService.class));
 
-        assertEquals("COMPLETED", controller.markStepCompleted("i1", "s1").status());
+        var response = controller.markStepCompleted("i1", "s1");
+        assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
+        assertEquals("COMPLETED", response.getBody().status());
+    }
+
+
+    @Test
+    void shouldReturnConflictForInvalidStepTransition() {
+        StepExecutionService stepExecutionService = mock(StepExecutionService.class);
+        when(stepExecutionService.completeStepExecution("i1", "s1"))
+                .thenThrow(new IllegalStateException("invalid transition"));
+
+        UserOrchestrationController controller = new UserOrchestrationController(
+                mock(ExecutionPlanService.class),
+                mock(ExecutionInstanceService.class),
+                stepExecutionService,
+                mock(CurrencyConversionWorkflowService.class));
+
+        var response = controller.markStepCompleted("i1", "s1");
+
+        assertEquals(HttpStatusCode.valueOf(409), response.getStatusCode());
+        assertTrue(response.getBody() == null);
+    }
+
+    @Test
+    void shouldReturnNotFoundForMissingStepExecution() {
+        StepExecutionService stepExecutionService = mock(StepExecutionService.class);
+        when(stepExecutionService.completeStepExecution("i1", "missing"))
+                .thenReturn(java.util.Optional.empty());
+
+        UserOrchestrationController controller = new UserOrchestrationController(
+                mock(ExecutionPlanService.class),
+                mock(ExecutionInstanceService.class),
+                stepExecutionService,
+                mock(CurrencyConversionWorkflowService.class));
+
+        var response = controller.markStepCompleted("i1", "missing");
+
+        assertEquals(HttpStatusCode.valueOf(404), response.getStatusCode());
     }
 
     @Test

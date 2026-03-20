@@ -3,9 +3,11 @@ package com.fahdkhan.aicontrolplane.persistence.service;
 import com.fahdkhan.aicontrolplane.model.StepStatus;
 import com.fahdkhan.aicontrolplane.persistence.dto.StepExecutionDto;
 import com.fahdkhan.aicontrolplane.persistence.entity.StepExecution;
-import com.fahdkhan.aicontrolplane.persistence.repository.InstanceRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.ExecutionStepRepository;
+import com.fahdkhan.aicontrolplane.persistence.repository.InstanceRepository;
 import com.fahdkhan.aicontrolplane.persistence.repository.StepExecutionRepository;
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,10 @@ public class StepExecutionService {
 
     public Optional<StepExecutionDto> findById(String stepExecutionId) {
         return repository.findById(stepExecutionId).map(this::toDto);
+    }
+
+    public Optional<StepExecutionDto> findByInstanceIdAndStepId(String instanceId, String stepId) {
+        return repository.findByInstance_InstanceIdAndStep_StepId(instanceId, stepId).map(this::toDto);
     }
 
     public List<StepExecutionDto> findAll() {
@@ -62,6 +68,39 @@ public class StepExecutionService {
                 dto.completedAt(),
                 dto.executionTimeMs(),
                 dto.stepCost())));
+    }
+
+    public Optional<StepExecutionDto> completeStepExecution(String instanceId, String stepId) {
+        Optional<StepExecution> existingOpt = repository.findByInstance_InstanceIdAndStep_StepId(instanceId, stepId);
+        if (existingOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        StepExecution existing = existingOpt.get();
+        if (!isValidTransition(existing.getStatus(), StepStatus.COMPLETED)) {
+            throw new IllegalStateException(
+                    "Illegal step execution transition from " + existing.getStatus() + " to " + StepStatus.COMPLETED);
+        }
+
+        existing.setStatus(StepStatus.COMPLETED);
+        Instant now = Instant.now();
+        Instant startedAt = existing.getStartedAt() != null ? existing.getStartedAt() : now;
+        existing.setStartedAt(startedAt);
+        existing.setCompletedAt(now);
+        existing.setExecutionTimeMs(Math.max(0L, now.toEpochMilli() - startedAt.toEpochMilli()));
+        if (existing.getStepCost() == null) {
+            existing.setStepCost(BigDecimal.ZERO);
+        }
+        return Optional.of(toDto(repository.save(existing)));
+    }
+
+    boolean isValidTransition(StepStatus currentStatus, StepStatus nextStatus) {
+        return switch (currentStatus) {
+            case PENDING -> nextStatus == StepStatus.READY || nextStatus == StepStatus.SKIPPED;
+            case READY -> nextStatus == StepStatus.RUNNING || nextStatus == StepStatus.SKIPPED;
+            case RUNNING -> nextStatus == StepStatus.COMPLETED || nextStatus == StepStatus.FAILED;
+            case COMPLETED, FAILED, SKIPPED -> false;
+        };
     }
 
     private StepExecution toEntity(StepExecutionDto dto) {
