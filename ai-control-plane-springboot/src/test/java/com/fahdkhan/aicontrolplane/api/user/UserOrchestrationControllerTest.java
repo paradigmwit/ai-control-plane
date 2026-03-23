@@ -23,6 +23,51 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 class UserOrchestrationControllerTest {
 
     @Test
+    void shouldListCurrencyConversionHistoryNewestFirst() {
+        ExecutionInstanceService instanceService = mock(ExecutionInstanceService.class);
+        when(instanceService.findAll()).thenReturn(java.util.List.of(
+                new ExecutionInstanceDto(
+                        "i1",
+                        CurrencyConversionWorkflowService.PLAN_ID,
+                        "COMPLETED",
+                        Instant.parse("2026-01-01T00:00:00Z"),
+                        Instant.parse("2026-01-01T00:00:00Z"),
+                        Instant.parse("2026-01-01T00:01:00Z"),
+                        BigDecimal.ZERO,
+                        null),
+                new ExecutionInstanceDto(
+                        "i2",
+                        CurrencyConversionWorkflowService.PLAN_ID,
+                        "COMPLETED",
+                        Instant.parse("2026-01-02T00:00:00Z"),
+                        Instant.parse("2026-01-02T00:00:00Z"),
+                        Instant.parse("2026-01-02T00:01:00Z"),
+                        BigDecimal.ZERO,
+                        null),
+                new ExecutionInstanceDto(
+                        "i3",
+                        "plan.other",
+                        "COMPLETED",
+                        Instant.parse("2026-01-03T00:00:00Z"),
+                        Instant.parse("2026-01-03T00:00:00Z"),
+                        Instant.parse("2026-01-03T00:01:00Z"),
+                        BigDecimal.ZERO,
+                        null)));
+
+        UserOrchestrationController controller = new UserOrchestrationController(
+                mock(ExecutionPlanService.class),
+                instanceService,
+                mock(StepExecutionService.class),
+                mock(CurrencyConversionWorkflowService.class));
+
+        var response = controller.currencyConversionWorkflowHistory();
+
+        assertEquals(2, response.size());
+        assertEquals("i2", response.get(0).instanceId());
+        assertEquals("i1", response.get(1).instanceId());
+    }
+
+    @Test
     void shouldCreateExecutionPlan() {
         ExecutionPlanService planService = mock(ExecutionPlanService.class);
         when(planService.save(any())).thenReturn(new ExecutionPlanDto("p1", "{}", Instant.now()));

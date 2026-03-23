@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Control Plane | User</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body data-page="user">
+<div class="shell">
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">AI Control Plane</p>
+            <h1>User workflows</h1>
+            <p class="subtle">Run approved workflows without the extra orchestration or persistence controls.</p>
+        </div>
+        <nav class="nav-links" aria-label="Primary">
+            <a class="nav-link active" href="/html/index.html">User view</a>
+            <a class="nav-link" href="/html/admin.html">Admin view</a>
+        </nav>
+    </header>
+
+    <main class="content-grid content-grid-user">
+        <section class="panel hero-panel">
+            <p class="eyebrow">Available now</p>
+            <h2>Currency conversion workflow</h2>
+            <p class="subtle">Submit a natural language prompt like <strong>Convert 100 USD to EUR</strong> and get a readable result plus the execution trace behind it.</p>
+            <div class="badge-row">
+                <span class="badge">1 user workflow</span>
+                <span class="badge">Guided output</span>
+                <span class="badge">History view</span>
+            </div>
+        </section>
+
+        <section class="panel workflow-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Execute workflow</p>
+                    <h2>Currency conversion</h2>
+                </div>
+                <span class="status-pill" id="user-status">Ready</span>
+            </div>
+
+            <form id="workflow-form" class="stack-lg">
+                <label for="currency-prompt">Conversion request</label>
+                <textarea id="currency-prompt" name="prompt" rows="4" placeholder="Convert 125 USD to GBP" required></textarea>
+                <div class="actions">
+                    <button type="submit">Run workflow</button>
+                    <button type="button" class="button-secondary" id="load-example">Load example</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="panel history-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Historical instances</p>
+                    <h2>Recent executions</h2>
+                </div>
+                <button type="button" class="button-secondary" id="refresh-history">Refresh</button>
+            </div>
+
+            <div id="history-empty" class="empty-state">
+                No previous workflow instances are available yet.
+            </div>
+            <div id="history-list" class="history-list hidden"></div>
+        </section>
+
+        <section class="panel results-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Execution result</p>
+                    <h2>Friendly response and timeline</h2>
+                </div>
+            </div>
+
+            <div id="result-empty" class="empty-state">
+                Run the workflow or choose a historical instance to see the details and timeline.
+            </div>
+
+            <div id="result-content" class="hidden stack-lg">
+                <div class="result-highlight">
+                    <p class="eyebrow">Converted amount</p>
+                    <h3 id="conversion-summary">—</h3>
+                    <p id="conversion-caption" class="subtle">Awaiting execution details.</p>
+                </div>
+
+                <div class="result-grid">
+                    <article class="detail-card">
+                        <span>Plan ID</span>
+                        <strong id="plan-id">—</strong>
+                    </article>
+                    <article class="detail-card">
+                        <span>Instance ID</span>
+                        <strong id="instance-id">—</strong>
+                    </article>
+                    <article class="detail-card">
+                        <span>Status</span>
+                        <strong id="execution-status">—</strong>
+                    </article>
+                    <article class="detail-card">
+                        <span>Exchange rate</span>
+                        <strong id="exchange-rate">—</strong>
+                    </article>
+                    <article class="detail-card">
+                        <span>Rate source</span>
+                        <strong id="rate-source">—</strong>
+                    </article>
+                    <article class="detail-card">
+                        <span>Completed at</span>
+                        <strong id="completed-at">—</strong>
+                    </article>
+                </div>
+
+                <div>
+                    <div class="section-heading compact">
+                        <h3>Timeline</h3>
+                    </div>
+                    <div id="step-list" class="step-list"></div>
+                </div>
+
+                <div>
+                    <div class="section-heading compact">
+                        <h3>Raw payload</h3>
+                    </div>
+                    <pre id="raw-payload" class="code-block"></pre>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+<script src="/js/shared.js"></script>
+<script src="/js/user.js"></script>
+</body>
+</html>

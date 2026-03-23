@@ -19,7 +19,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.ignoringRequestMatchers("/h2/**"))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/api/health").permitAll()
+                        .requestMatchers("/", "/index.html", "/html/**", "/css/**", "/js/**", "/api/health").permitAll()
                         .requestMatchers("/h2/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger/user", "/swagger/admin").permitAll()
                         .requestMatchers("/api/admin/**").permitAll()

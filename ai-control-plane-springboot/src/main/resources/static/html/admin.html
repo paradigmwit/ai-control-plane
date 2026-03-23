@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Control Plane | Admin</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body data-page="admin">
+<div class="shell">
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">AI Control Plane</p>
+            <h1>Admin API console</h1>
+            <p class="subtle">Execute every available user and admin endpoint from one minimal workspace.</p>
+        </div>
+        <nav class="nav-links" aria-label="Primary">
+            <a class="nav-link" href="/html/index.html">User view</a>
+            <a class="nav-link active" href="/html/admin.html">Admin view</a>
+        </nav>
+    </header>
+
+    <main class="content-grid content-grid-admin">
+        <section class="panel admin-groups-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Endpoints</p>
+                    <h2>Available operations</h2>
+                </div>
+                <span class="status-pill" id="admin-status">Idle</span>
+            </div>
+            <div id="admin-groups" class="admin-groups"></div>
+        </section>
+
+        <section class="panel admin-request-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Request builder</p>
+                    <h2 id="request-title">Choose an endpoint</h2>
+                </div>
+            </div>
+
+            <form id="admin-form" class="stack-lg hidden">
+                <div id="path-fields" class="input-grid"></div>
+                <div>
+                    <label for="request-body">JSON body</label>
+                    <textarea id="request-body" rows="12" spellcheck="false"></textarea>
+                </div>
+                <div class="actions">
+                    <button type="submit">Send request</button>
+                    <button type="button" class="button-secondary" id="reset-request">Reset</button>
+                </div>
+            </form>
+
+            <div id="request-empty" class="empty-state">
+                Pick an endpoint from the left to prefill the path parameters and JSON body.
+            </div>
+        </section>
+
+        <section class="panel admin-response-panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Response</p>
+                    <h2>Latest result</h2>
+                </div>
+            </div>
+
+            <div class="result-grid admin-result-grid">
+                <article class="detail-card">
+                    <span>Status</span>
+                    <strong id="response-status">—</strong>
+                </article>
+                <article class="detail-card">
+                    <span>Method</span>
+                    <strong id="response-method">—</strong>
+                </article>
+                <article class="detail-card">
+                    <span>Path</span>
+                    <strong id="response-path">—</strong>
+                </article>
+            </div>
+
+            <pre id="response-body" class="code-block">Select an endpoint to begin.</pre>
+        </section>
+    </main>
+</div>
+<script src="/js/shared.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>
