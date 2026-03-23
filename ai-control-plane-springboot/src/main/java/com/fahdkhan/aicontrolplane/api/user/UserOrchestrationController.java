@@ -10,6 +10,7 @@ import com.fahdkhan.aicontrolplane.persistence.service.StepExecutionService;
 import com.fahdkhan.aicontrolplane.user.CurrencyConversionWorkflowService;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +50,17 @@ public class UserOrchestrationController {
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping("/workflows/currency-conversion/history")
+    public List<ExecutionInstanceDto> currencyConversionWorkflowHistory() {
+        return executionInstanceService.findAll().stream()
+                .filter(instance -> instance.planId().equals(CurrencyConversionWorkflowService.PLAN_ID))
+                .sorted(Comparator.comparing(
+                                ExecutionInstanceDto::createdAt,
+                                Comparator.nullsLast(Comparator.naturalOrder()))
+                        .reversed())
+                .toList();
     }
 
     @PostMapping("/plan")
