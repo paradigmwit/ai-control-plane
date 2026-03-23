@@ -33,16 +33,19 @@ public class CurrencyConversionWorkflowService {
     private final StepExecutionService stepExecutionService;
     private final ExchangeRateProvider exchangeRateProvider;
     private final CurrencyConversionWorkflowFailurePersistenceService failurePersistenceService;
+    private final OllamaCurrencyPromptParser ollamaCurrencyPromptParser;
 
     public CurrencyConversionWorkflowService(
             ExecutionInstanceService executionInstanceService,
             StepExecutionService stepExecutionService,
             ExchangeRateProvider exchangeRateProvider,
-            CurrencyConversionWorkflowFailurePersistenceService failurePersistenceService) {
+            CurrencyConversionWorkflowFailurePersistenceService failurePersistenceService,
+            OllamaCurrencyPromptParser ollamaCurrencyPromptParser) {
         this.executionInstanceService = executionInstanceService;
         this.stepExecutionService = stepExecutionService;
         this.exchangeRateProvider = exchangeRateProvider;
         this.failurePersistenceService = failurePersistenceService;
+        this.ollamaCurrencyPromptParser = ollamaCurrencyPromptParser;
     }
 
     @Transactional
@@ -148,6 +151,11 @@ public class CurrencyConversionWorkflowService {
     }
 
     private ConversionInput parsePrompt(String prompt) {
+        return ollamaCurrencyPromptParser.parse(prompt)
+                .orElseGet(() -> parsePromptFallback(prompt));
+    }
+
+    ConversionInput parsePromptFallback(String prompt) {
         Matcher matcher = PROMPT_PATTERN.matcher(prompt == null ? "" : prompt.trim());
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Prompt format must include amount and currencies, e.g. '100 USD to EUR'");
@@ -214,8 +222,5 @@ public class CurrencyConversionWorkflowService {
             return "";
         }
         return value.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
-
-    private record ConversionInput(BigDecimal amount, String sourceCurrency, String targetCurrency) {
     }
 }

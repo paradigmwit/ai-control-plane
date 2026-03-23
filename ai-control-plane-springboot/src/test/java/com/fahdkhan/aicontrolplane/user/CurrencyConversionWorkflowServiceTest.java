@@ -21,21 +21,25 @@ import com.fahdkhan.aicontrolplane.persistence.service.StepExecutionService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class CurrencyConversionWorkflowServiceTest {
 
     @Test
-    void shouldExecuteCurrencyConversionWorkflow() {
+    void shouldExecuteCurrencyConversionWorkflowUsingOllamaParseFirst() {
         ExecutionInstanceService executionInstanceService = mock(ExecutionInstanceService.class);
         StepExecutionService stepExecutionService = mock(StepExecutionService.class);
         ExchangeRateProvider exchangeRateProvider = mock(ExchangeRateProvider.class);
         CurrencyConversionWorkflowFailurePersistenceService failurePersistenceService =
                 mock(CurrencyConversionWorkflowFailurePersistenceService.class);
+        OllamaCurrencyPromptParser ollamaCurrencyPromptParser = mock(OllamaCurrencyPromptParser.class);
 
         when(executionInstanceService.save(any())).thenAnswer(i -> i.getArgument(0, ExecutionInstanceDto.class));
         when(stepExecutionService.save(any())).thenAnswer(i -> i.getArgument(0, StepExecutionDto.class));
+        when(ollamaCurrencyPromptParser.parse("Convert 100 USD to EUR"))
+                .thenReturn(Optional.of(new ConversionInput(new BigDecimal("100"), "USD", "EUR")));
         when(exchangeRateProvider.resolveRate("USD", "EUR")).thenReturn(new ExchangeRateQuote(
                 new BigDecimal("0.92592593"),
                 "internal-feed",
@@ -48,7 +52,8 @@ class CurrencyConversionWorkflowServiceTest {
                 executionInstanceService,
                 stepExecutionService,
                 exchangeRateProvider,
-                failurePersistenceService);
+                failurePersistenceService,
+                ollamaCurrencyPromptParser);
 
         CurrencyConversionWorkflowResponse response = service.execute("Convert 100 USD to EUR");
 
@@ -74,8 +79,43 @@ class CurrencyConversionWorkflowServiceTest {
         assertEquals(CurrencyConversionWorkflowService.RATE_STEP_ID, savedSteps.get(3).stepId());
         assertEquals(CurrencyConversionWorkflowService.CONVERT_STEP_ID, savedSteps.get(4).stepId());
         assertEquals(CurrencyConversionWorkflowService.CONVERT_STEP_ID, savedSteps.get(5).stepId());
+        assertEquals("{\"amount\":100,\"source_currency\":\"USD\",\"target_currency\":\"EUR\"}", savedSteps.get(1).outputPayload());
         assertTrue(savedSteps.get(3).outputPayload().contains("\"rate_source\":\"internal-feed\""));
 
+        verify(failurePersistenceService, never()).persistFailure(any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldFallBackToRegexParserWhenOllamaParseFails() {
+        ExecutionInstanceService executionInstanceService = mock(ExecutionInstanceService.class);
+        StepExecutionService stepExecutionService = mock(StepExecutionService.class);
+        ExchangeRateProvider exchangeRateProvider = mock(ExchangeRateProvider.class);
+        CurrencyConversionWorkflowFailurePersistenceService failurePersistenceService =
+                mock(CurrencyConversionWorkflowFailurePersistenceService.class);
+        OllamaCurrencyPromptParser ollamaCurrencyPromptParser = mock(OllamaCurrencyPromptParser.class);
+
+        when(executionInstanceService.save(any())).thenAnswer(i -> i.getArgument(0, ExecutionInstanceDto.class));
+        when(stepExecutionService.save(any())).thenAnswer(i -> i.getArgument(0, StepExecutionDto.class));
+        when(ollamaCurrencyPromptParser.parse("Convert 100 USD to EUR")).thenReturn(Optional.empty());
+        when(exchangeRateProvider.resolveRate("USD", "EUR")).thenReturn(new ExchangeRateQuote(
+                new BigDecimal("0.92592593"),
+                "internal-feed",
+                Instant.parse("2026-01-01T00:00:00Z"),
+                new BigDecimal("0.99"),
+                "internal-feed-v2",
+                false));
+
+        CurrencyConversionWorkflowService service = new CurrencyConversionWorkflowService(
+                executionInstanceService,
+                stepExecutionService,
+                exchangeRateProvider,
+                failurePersistenceService,
+                ollamaCurrencyPromptParser);
+
+        CurrencyConversionWorkflowResponse response = service.execute("Convert 100 USD to EUR");
+
+        assertTrue(response.outputPayload().contains("\"converted_amount\":92.5926"));
+        verify(exchangeRateProvider).resolveRate("USD", "EUR");
         verify(failurePersistenceService, never()).persistFailure(any(), any(), any(), any(), any(), any(), any());
     }
 
@@ -86,16 +126,20 @@ class CurrencyConversionWorkflowServiceTest {
         ExchangeRateProvider exchangeRateProvider = mock(ExchangeRateProvider.class);
         CurrencyConversionWorkflowFailurePersistenceService failurePersistenceService =
                 mock(CurrencyConversionWorkflowFailurePersistenceService.class);
+        OllamaCurrencyPromptParser ollamaCurrencyPromptParser = mock(OllamaCurrencyPromptParser.class);
 
         when(executionInstanceService.save(any())).thenAnswer(i -> i.getArgument(0, ExecutionInstanceDto.class));
         when(stepExecutionService.save(any())).thenAnswer(i -> i.getArgument(0, StepExecutionDto.class));
+        when(ollamaCurrencyPromptParser.parse("Convert 100 USD to EUR"))
+                .thenReturn(Optional.of(new ConversionInput(new BigDecimal("100"), "USD", "EUR")));
         when(exchangeRateProvider.resolveRate("USD", "EUR")).thenThrow(new IllegalStateException("lookup failed"));
 
         CurrencyConversionWorkflowService service = new CurrencyConversionWorkflowService(
                 executionInstanceService,
                 stepExecutionService,
                 exchangeRateProvider,
-                failurePersistenceService);
+                failurePersistenceService,
+                ollamaCurrencyPromptParser);
 
         IllegalStateException error = assertThrows(IllegalStateException.class, () -> service.execute("Convert 100 USD to EUR"));
 
@@ -113,12 +157,16 @@ class CurrencyConversionWorkflowServiceTest {
     }
 
     @Test
-    void shouldFailForInvalidPrompt() {
+    void shouldFailForInvalidPromptWhenOllamaAndFallbackBothFail() {
+        OllamaCurrencyPromptParser ollamaCurrencyPromptParser = mock(OllamaCurrencyPromptParser.class);
+        when(ollamaCurrencyPromptParser.parse("convert money please")).thenReturn(Optional.empty());
+
         CurrencyConversionWorkflowService service = new CurrencyConversionWorkflowService(
                 mock(ExecutionInstanceService.class),
                 mock(StepExecutionService.class),
                 mock(ExchangeRateProvider.class),
-                mock(CurrencyConversionWorkflowFailurePersistenceService.class));
+                mock(CurrencyConversionWorkflowFailurePersistenceService.class),
+                ollamaCurrencyPromptParser);
 
         assertThrows(IllegalArgumentException.class, () -> service.execute("convert money please"));
     }

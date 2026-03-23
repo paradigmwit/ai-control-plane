@@ -1,6 +1,7 @@
 package com.fahdkhan.aicontrolplane.api.user;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -13,7 +14,6 @@ import com.fahdkhan.aicontrolplane.persistence.service.ExecutionInstanceService;
 import com.fahdkhan.aicontrolplane.persistence.service.ExecutionPlanService;
 import com.fahdkhan.aicontrolplane.persistence.service.StepExecutionService;
 import com.fahdkhan.aicontrolplane.user.CurrencyConversionWorkflowService;
-import com.fahdkhan.aicontrolplane.api.user.CurrencyConversionWorkflowResponse;
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
@@ -126,6 +126,27 @@ class UserOrchestrationControllerTest {
     }
 
     @Test
+    void shouldPreserveWorkflowPayloadFromService() {
+        CurrencyConversionWorkflowService workflowService = mock(CurrencyConversionWorkflowService.class);
+        when(workflowService.execute("convert 50 usd to eur"))
+                .thenReturn(new CurrencyConversionWorkflowResponse(
+                        "p1",
+                        "i1",
+                        "{\"amount\":50,\"source_currency\":\"USD\",\"target_currency\":\"EUR\"}"));
+
+        UserOrchestrationController controller = new UserOrchestrationController(
+                mock(ExecutionPlanService.class),
+                mock(ExecutionInstanceService.class),
+                mock(StepExecutionService.class),
+                workflowService);
+
+        var response = controller.executeCurrencyConversionWorkflow(new CurrencyConversionWorkflowRequest("convert 50 usd to eur"));
+
+        assertEquals(HttpStatusCode.valueOf(200), response.getStatusCode());
+        assertEquals("{\"amount\":50,\"source_currency\":\"USD\",\"target_currency\":\"EUR\"}", response.getBody().outputPayload());
+    }
+
+    @Test
     void shouldReturnBadRequestForInvalidCurrencyPrompt() {
         CurrencyConversionWorkflowService workflowService = mock(CurrencyConversionWorkflowService.class);
         when(workflowService.execute("bad prompt")).thenThrow(new IllegalArgumentException("bad"));
@@ -139,5 +160,6 @@ class UserOrchestrationControllerTest {
         var response = controller.executeCurrencyConversionWorkflow(new CurrencyConversionWorkflowRequest("bad prompt"));
 
         assertEquals(HttpStatusCode.valueOf(400), response.getStatusCode());
+        assertNull(response.getBody());
     }
 }
